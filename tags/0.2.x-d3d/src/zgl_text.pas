@@ -463,7 +463,7 @@ begin
           lineWidth := 0;
           lineFeed  := FALSE;
           INC( textLinesCount );
-          if ( textLinesCount + 1 ) * Font.MaxHeight > Rect.H Then break;
+//          if ( textLinesCount + 1 ) * Font.MaxHeight > Rect.H Then break;
         end;
     end;
 
