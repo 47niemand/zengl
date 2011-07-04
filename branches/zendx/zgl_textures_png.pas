@@ -586,9 +586,7 @@ begin
 
 _exit:
   begin
-    pngHasIDAT  := FALSE;
     pngHastRNS  := FALSE;
-    pngHeaderOk := FALSE;
   end;
 end;
 
