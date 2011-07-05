@@ -44,15 +44,16 @@ uses
 const
   PNG_EXTENSION : array[ 0..3 ] of Char = ( 'P', 'N', 'G', #0 );
 
-procedure png_LoadFromFile( const FileName : String; var Data : Pointer; var W, H : Word );
-procedure png_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H : Word );
+procedure png_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
+procedure png_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
 
 implementation
 uses
   zgl_main,
   zgl_types,
   zgl_file,
-  zgl_log;
+  zgl_log,
+  zgl_textures;
 
 threadvar
   pngBitDepth     : Integer;
@@ -504,16 +505,16 @@ begin
   pngHastRNS := TRUE;
 end;
 
-procedure png_LoadFromFile( const FileName : String; var Data : Pointer; var W, H : Word );
+procedure png_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
   var
     pngMem : zglTMemory;
 begin
   mem_LoadFromFile( pngMem, FileName );
-  png_LoadFromMemory( pngMem, Data, W, H );
+  png_LoadFromMemory( pngMem, Data, W, H, Format );
   mem_Free( pngMem );
 end;
 
-procedure png_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H : Word );
+procedure png_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
   label _exit;
   var
     pngMem          : zglTMemory;
@@ -581,8 +582,9 @@ begin
       goto _exit;
     end;
 
-  W := pngHeader.Width;
-  H := pngHeader.Height;
+  W      := pngHeader.Width;
+  H      := pngHeader.Height;
+  Format := TEX_FORMAT_RGBA;
 
 _exit:
   begin

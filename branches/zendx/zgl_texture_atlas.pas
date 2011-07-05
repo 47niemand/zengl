@@ -264,11 +264,12 @@ end;
 
 function atlas_InsertFromFile( Atlas : zglPAtlas; const FileName : String; TransparentColor, Flags : LongWord ) : zglPAtlasNode;
   var
-    i     : Integer;
-    pData : Pointer;
-    pABGR : Pointer;
-    tex   : zglTTexture;
-    w, h  : Word;
+    i      : Integer;
+    pData  : Pointer;
+    pABGR  : Pointer;
+    tex    : zglTTexture;
+    w, h   : Word;
+    format : Word;
 begin
   Result := nil;
   pData  := nil;
@@ -281,7 +282,7 @@ begin
 
   for i := managerTexture.Count.Formats - 1 downto 0 do
     if u_StrUp( file_GetExtension( FileName ) ) = managerTexture.Formats[ i ].Extension Then
-      managerTexture.Formats[ i ].FileLoader( FileName, pData, w, h );
+      managerTexture.Formats[ i ].FileLoader( FileName, pData, w, h, format );
 
   if not Assigned( pData ) Then
     begin
@@ -296,14 +297,18 @@ begin
   tex.FramesX := 1;
   tex.FramesY := 1;
   tex.Flags   := Flags;
+  tex.Format  := format;
   if ( Flags and TEX_CONVERT_TO_POT > 0 ) Then
     tex.Flags := tex.Flags xor TEX_CONVERT_TO_POT;
-  if tex.Flags and TEX_CALCULATE_ALPHA > 0 Then
+  if tex.Format = TEX_FORMAT_RGBA Then
     begin
-      tex_CalcTransparent( pData, TransparentColor, w, h );
-      tex_CalcAlpha( pData, w, h );
-    end else
-      tex_CalcTransparent( pData, TransparentColor, w, h );
+      if tex.Flags and TEX_CALCULATE_ALPHA > 0 Then
+        begin
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+          tex_CalcAlpha( pData, w, h );
+        end else
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+    end;
   tex_CalcFlags( tex, pData );
 
   Result := atlas_AddNode( @Atlas.root, Atlas.Texture, tex.Width, tex.Height );
@@ -319,18 +324,19 @@ end;
 
 function atlas_InsertFromMemory( Atlas : zglPAtlas; const Memory : zglTMemory; const Extension : String; TransparentColor, Flags : LongWord ) : zglPAtlasNode;
   var
-    i     : Integer;
-    pData : Pointer;
-    pABGR : Pointer;
-    tex   : zglTTexture;
-    w, h  : Word;
+    i      : Integer;
+    pData  : Pointer;
+    pABGR  : Pointer;
+    tex    : zglTTexture;
+    w, h   : Word;
+    format : Word;
 begin
   Result := nil;
   pData  := nil;
 
   for i := managerTexture.Count.Formats - 1 downto 0 do
     if u_StrUp( Extension ) = managerTexture.Formats[ i ].Extension Then
-      managerTexture.Formats[ i ].MemLoader( Memory, pData, w, h );
+      managerTexture.Formats[ i ].MemLoader( Memory, pData, w, h, format );
 
   if not Assigned( pData ) Then
     begin
@@ -345,14 +351,18 @@ begin
   tex.FramesX := 1;
   tex.FramesY := 1;
   tex.Flags   := Flags;
+  tex.Format  := format;
   if ( Flags and TEX_CONVERT_TO_POT > 0 ) Then
     tex.Flags := tex.Flags xor TEX_CONVERT_TO_POT;
-  if tex.Flags and TEX_CALCULATE_ALPHA > 0 Then
+  if tex.Format = TEX_FORMAT_RGBA Then
     begin
-      tex_CalcTransparent( pData, TransparentColor, w, h );
-      tex_CalcAlpha( pData, w, h );
-    end else
-      tex_CalcTransparent( pData, TransparentColor, w, h );
+      if tex.Flags and TEX_CALCULATE_ALPHA > 0 Then
+        begin
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+          tex_CalcAlpha( pData, w, h );
+        end else
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+    end;
   tex_CalcFlags( tex, pData );
 
   Result := atlas_AddNode( @Atlas.root, Atlas.Texture, tex.Width, tex.Height );

@@ -52,15 +52,16 @@ type
     end;
 end;
 
-procedure tga_Load( var Data : Pointer; var W, H : Word );
-procedure tga_LoadFromFile( const FileName : String; var Data : Pointer; var W, H : Word );
-procedure tga_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H : Word );
+procedure tga_Load( var Data : Pointer; var W, H, Format : Word );
+procedure tga_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
+procedure tga_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
 
 implementation
 uses
   zgl_types,
   zgl_main,
-  zgl_log;
+  zgl_log,
+  zgl_textures;
 
 var
   tgaMem     : zglTMemory;
@@ -140,7 +141,7 @@ begin
   tgaHeader.ImageType := tgaHeader.ImageType - 8;
 end;
 
-procedure tga_Load( var Data : Pointer; var W, H : Word );
+procedure tga_Load( var Data : Pointer; var W, H, Format : Word );
   label _exit;
   var
     i         : LongWord;
@@ -228,8 +229,9 @@ begin
             end;
         end else
           Data := nil;
-  W := tgaHeader.ImgSpec.Width;
-  H := tgaHeader.ImgSpec.Height;
+  W      := tgaHeader.ImgSpec.Width;
+  H      := tgaHeader.ImgSpec.Height;
+  Format := TEX_FORMAT_RGBA;
 
 _exit:
   begin
@@ -238,19 +240,19 @@ _exit:
   end;
 end;
 
-procedure tga_LoadFromFile( const FileName : String; var Data : Pointer; var W, H : Word );
+procedure tga_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
 begin
   mem_LoadFromFile( tgaMem, FileName );
-  tga_Load( Data, W, H );
+  tga_Load( Data, W, H, Format );
   mem_Free( tgaMem );
 end;
 
-procedure tga_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H : Word );
+procedure tga_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
 begin
   tgaMem.Size     := Memory.Size;
   tgaMem.Memory   := Memory.Memory;
   tgaMem.Position := Memory.Position;
-  tga_Load( Data, W, H );
+  tga_Load( Data, W, H, Format );
 end;
 
 initialization

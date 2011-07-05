@@ -177,14 +177,15 @@ type
   end;
 {$ENDIF}
 
-procedure jpg_Load( var Data : Pointer; var W, H : Word );
-procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H : Word );
-procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H : Word );
+procedure jpg_Load( var Data : Pointer; var W, H, Format : Word );
+procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
+procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
 
 implementation
 uses
   zgl_main,
-  zgl_log;
+  zgl_log,
+  zgl_textures;
 
 var
   jpgMem  : zglTMemory;
@@ -239,7 +240,7 @@ begin
 end;
 {$ENDIF}
 
-procedure jpg_Load( var Data : Pointer; var W, H : Word );
+procedure jpg_Load( var Data : Pointer; var W, H, Format : Word );
   label _exit;
   {$IFNDEF USE_LIBJPEG}
   var
@@ -266,8 +267,9 @@ begin
   end;
 {$ENDIF}
 
-  W := jpgData.Width;
-  H := jpgData.Height;
+  W      := jpgData.Width;
+  H      := jpgData.Height;
+  Format := TEX_FORMAT_RGBA;
 
 _exit:
   begin
@@ -278,19 +280,19 @@ _exit:
   end;
 end;
 
-procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H : Word );
+procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
 begin
   mem_LoadFromFile( jpgMem, FileName );
-  jpg_Load( Data, W, H );
+  jpg_Load( Data, W, H, Format );
   mem_Free( jpgMem );
 end;
 
-procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H : Word );
+procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
 begin
   jpgMem.Size     := Memory.Size;
   jpgMem.Memory   := Memory.Memory;
   jpgMem.Position := Memory.Position;
-  jpg_Load( Data, W, H );
+  jpg_Load( Data, W, H, Format );
 end;
 
 initialization

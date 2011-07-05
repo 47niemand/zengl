@@ -31,6 +31,13 @@ uses
   zgl_memory;
 
 const
+  TEX_FORMAT_RGBA       = $01;
+  TEX_FORMAT_RGBA_PVR2  = $10;
+  TEX_FORMAT_RGBA_PVR4  = $11;
+  TEX_FORMAT_RGBA_DXT1  = $20;
+  TEX_FORMAT_RGBA_DXT3  = $21;
+  TEX_FORMAT_RGBA_DXT5  = $22;
+
   TEX_MIPMAP            = $000001;
   TEX_CLAMP             = $000002;
   TEX_REPEAT            = $000004;
@@ -65,6 +72,7 @@ type
     FramesY       : Word;
     FramesCoord   : array of zglTTextureCoord;
     Flags         : LongWord;
+    Format        : Word;
 
     prev, next    : zglPTexture;
 end;
@@ -73,8 +81,8 @@ type
   zglPTextureFormat = ^zglTTextureFormat;
   zglTTextureFormat = record
     Extension  : String;
-    FileLoader : procedure( const FileName : String; var pData : Pointer; var W, H : Word );
-    MemLoader  : procedure( const Memory : zglTMemory; var pData : Pointer; var W, H : Word );
+    FileLoader : procedure( const FileName : String; var pData : Pointer; var W, H, Format : Word );
+    MemLoader  : procedure( const Memory : zglTMemory; var pData : Pointer; var W, H, Format : Word );
 end;
 
 type
@@ -91,7 +99,7 @@ end;
 function  tex_Add : zglPTexture;
 procedure tex_Del( var Texture : zglPTexture );
 
-procedure tex_Create( var Texture : zglTTexture; var pData : Pointer );
+procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
 function  tex_CreateZero( Width, Height : Word; Color : LongWord = $000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromFile( const FileName : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromMemory( const Memory : zglTMemory; const Extension : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
@@ -164,7 +172,7 @@ begin
   DEC( managerTexture.Count.Items );
 end;
 
-procedure tex_Create( var Texture : zglTTexture; var pData : Pointer );
+procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
 begin
   tex_CalcFlags( Texture, pData );
   if Texture.Flags and TEX_COMPRESS >= 1 Then
@@ -220,6 +228,7 @@ begin
   Result.FramesX := 1;
   Result.FramesY := 1;
   Result.Flags   := Flags;
+  Result.Format  := TEX_FORMAT_RGBA;
   tex_Create( Result^, pData );
 
   FreeMem( pData );
@@ -227,9 +236,10 @@ end;
 
 function tex_LoadFromFile( const FileName : String; TransparentColor, Flags : LongWord ) : zglPTexture;
   var
-    i     : Integer;
-    pData : Pointer;
-    w, h  : Word;
+    i      : Integer;
+    pData  : Pointer;
+    w, h   : Word;
+    format : Word;
 begin
   Result := nil;
   pData  := nil;
@@ -246,7 +256,7 @@ begin
 
   for i := managerTexture.Count.Formats - 1 downto 0 do
     if u_StrUp( file_GetExtension( FileName ) ) = managerTexture.Formats[ i ].Extension Then
-      managerTexture.Formats[ i ].FileLoader( FileName, pData, w, h );
+      managerTexture.Formats[ i ].FileLoader( FileName, pData, w, h, format );
 
   if not Assigned( pData ) Then
     begin
@@ -262,12 +272,16 @@ begin
   Result.FramesX := 1;
   Result.FramesY := 1;
   Result.Flags   := Flags;
-  if Result.Flags and TEX_CALCULATE_ALPHA > 0 Then
+  Result.Format  := format;
+  if Result.Format = TEX_FORMAT_RGBA Then
     begin
-      tex_CalcTransparent( pData, TransparentColor, w, h );
-      tex_CalcAlpha( pData, w, h );
-    end else
-      tex_CalcTransparent( pData, TransparentColor, w, h );
+      if Result.Flags and TEX_CALCULATE_ALPHA > 0 Then
+        begin
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+          tex_CalcAlpha( pData, w, h );
+        end else
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+    end;
   tex_Create( Result^, pData );
 
   log_Add( 'Texture loaded: "' + FileName + '"' );
@@ -277,9 +291,10 @@ end;
 
 function tex_LoadFromMemory( const Memory : zglTMemory; const Extension : String; TransparentColor, Flags : LongWord ) : zglPTexture;
   var
-    i     : Integer;
-    pData : Pointer;
-    w, h  : Word;
+    i      : Integer;
+    pData  : Pointer;
+    w, h   : Word;
+    format : Word;
 begin
   Result := nil;
   pData  := nil;
@@ -290,7 +305,7 @@ begin
 
   for i := managerTexture.Count.Formats - 1 downto 0 do
     if u_StrUp( Extension ) = managerTexture.Formats[ i ].Extension Then
-      managerTexture.Formats[ i ].MemLoader( Memory, pData, w, h );
+      managerTexture.Formats[ i ].MemLoader( Memory, pData, w, h, format );
 
   if not Assigned( pData ) Then
     begin
@@ -306,12 +321,16 @@ begin
   Result.FramesX := 1;
   Result.FramesY := 1;
   Result.Flags   := Flags;
-  if Result.Flags and TEX_CALCULATE_ALPHA > 0 Then
+  Result.Format  := format;
+  if Result.Format = TEX_FORMAT_RGBA Then
     begin
-      tex_CalcTransparent( pData, TransparentColor, w, h );
-      tex_CalcAlpha( pData, w, h );
-    end else
-      tex_CalcTransparent( pData, TransparentColor, w, h );
+      if Result.Flags and TEX_CALCULATE_ALPHA > 0 Then
+        begin
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+          tex_CalcAlpha( pData, w, h );
+        end else
+          tex_CalcTransparent( pData, TransparentColor, w, h );
+    end;
   tex_Create( Result^, pData );
 
   FreeMem( pData );
@@ -514,6 +533,8 @@ end;
 
 procedure tex_CalcFlags( var Texture : zglTTexture; var pData : Pointer );
 begin
+  if Texture.Format <> TEX_FORMAT_RGBA Then exit;
+
   if Texture.Flags and TEX_GRAYSCALE > 0 Then
     tex_CalcGrayScale( pData, Texture.Width, Texture.Height );
   if Texture.Flags and TEX_INVERT > 0 Then
