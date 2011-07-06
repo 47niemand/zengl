@@ -21,17 +21,22 @@
 unit zgl_textures_jpg;
 
 {$I zgl_config.cfg}
+{$IFDEF iOS}
+  {$modeswitch objectivec1}
+{$ENDIF}
 
 {$IFNDEF FPC}
   {$UNDEF USE_LIBJPEG}
 {$ENDIF}
 
+{$IFNDEF USE_LIBJPEG}
+  {$DEFINE USE_OLEPICTURE}
+{$ENDIF}
+
 interface
 
 uses
-  {$IFNDEF USE_LIBJPEG}
   Windows,
-  {$ENDIF}
   zgl_msvcrt,
   zgl_types,
   zgl_memory;
@@ -68,7 +73,17 @@ const
   {$L jquant2}
   {$L jutils}
   {$L wrapper}
+{$ENDIF}
 
+procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
+procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
+
+implementation
+uses
+  zgl_main,
+  zgl_textures;
+
+{$IFDEF USE_LIBJPEG}
 type
   zglPJPGData = ^zglTJPGData;
   zglTJPGData = record
@@ -80,7 +95,9 @@ type
   end;
 
   procedure jpgturbo_Load( var jpgData : zglTJPGData; var Data : Pointer ); cdecl; external;
-{$ELSE}
+{$ENDIF}
+
+{$IFDEF USE_OLEPICTURE}
 type
   OLE_HANDLE = LongWord;
   OLE_XPOS_HIMETRIC  = Longint;
@@ -177,22 +194,15 @@ type
   end;
 {$ENDIF}
 
-procedure jpg_Load( var Data : Pointer; var W, H, Format : Word );
-procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
-procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
+{$IFDEF USE_LIBJPEG}
+function getmem_f( Size : Integer ) : PByte; cdecl;
+begin
+  GetMem( Pointer( Result ), Size );
+end;
+{$ENDIF}
 
-implementation
-uses
-  zgl_main,
-  zgl_log,
-  zgl_textures;
-
-var
-  jpgMem  : zglTMemory;
-  jpgData : zglTJPGData;
-
-{$IFNDEF USE_LIBJPEG}
-procedure jpg_FillData( var Data : Pointer );
+{$IFDEF USE_OLEPICTURE}
+procedure jpg_FillData( var jpg : zglTJPGData; var Data : Pointer );
   var
     bi   : BITMAPINFO;
     bmp  : HBITMAP;
@@ -202,25 +212,25 @@ procedure jpg_FillData( var Data : Pointer );
     i    : Integer;
 begin
   DC := CreateCompatibleDC( GetDC( 0 ) );
-  jpgData.Buffer.get_Width ( W );
-  jpgData.Buffer.get_Height( H );
-  jpgData.Width  := MulDiv( W, GetDeviceCaps( DC, LOGPIXELSX ), 2540 );
-  jpgData.Height := MulDiv( H, GetDeviceCaps( DC, LOGPIXELSY ), 2540 );
+  jpg.Buffer.get_Width ( W );
+  jpg.Buffer.get_Height( H );
+  jpg.Width  := MulDiv( W, GetDeviceCaps( DC, LOGPIXELSX ), 2540 );
+  jpg.Height := MulDiv( H, GetDeviceCaps( DC, LOGPIXELSY ), 2540 );
 
   FillChar( bi, SizeOf( bi ), 0 );
   bi.bmiHeader.biSize        := SizeOf( BITMAPINFOHEADER );
   bi.bmiHeader.biBitCount    := 32;
-  bi.bmiHeader.biWidth       := jpgData.Width;
-  bi.bmiHeader.biHeight      := jpgData.Height;
+  bi.bmiHeader.biWidth       := jpg.Width;
+  bi.bmiHeader.biHeight      := jpg.Height;
   bi.bmiHeader.biCompression := BI_RGB;
   bi.bmiHeader.biPlanes      := 1;
   bmp := CreateDIBSection( DC, bi, DIB_RGB_COLORS, p, 0, 0 );
   SelectObject( DC, bmp );
-  jpgData.Buffer.Render( DC, 0, 0, jpgData.Width, jpgData.Height, 0, H, W, -H, nil );
+  jpg.Buffer.Render( DC, 0, 0, jpg.Width, jpg.Height, 0, H, W, -H, nil );
 
-  GetMem( Data, jpgData.Width * jpgData.Height * 4 );
+  GetMem( Data, jpg.Width * jpg.Height * 4 );
 
-  for i := 0 to jpgData.Width * jpgData.Height - 1 do
+  for i := 0 to jpg.Width * jpg.Height - 1 do
     begin
       PByte( Ptr( Data ) + i * 4 + 0 )^ := PByte( Ptr( p ) + i * 4 + 2 )^;
       PByte( Ptr( Data ) + i * 4 + 1 )^ := PByte( Ptr( p ) + i * 4 + 1 )^;
@@ -233,66 +243,49 @@ begin
 end;
 {$ENDIF}
 
-{$IFDEF USE_LIBJPEG}
-function getmem_f( Size : Integer ) : PByte; cdecl;
-begin
-  GetMem( Pointer( Result ), Size );
-end;
-{$ENDIF}
-
-procedure jpg_Load( var Data : Pointer; var W, H, Format : Word );
-  label _exit;
-  {$IFNDEF USE_LIBJPEG}
+procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
   var
+    jpgMem : zglTMemory;
+begin
+  mem_LoadFromFile( jpgMem, FileName );
+  jpg_LoadFromMemory( jpgMem, Data, W, H, Format );
+  mem_Free( jpgMem );
+end;
+
+procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
+  var
+    jpg : zglTJPGData;
+  {$IFDEF USE_OLEPICTURE}
     m : Pointer;
     g : HGLOBAL;
   {$ENDIF}
 begin
 {$IFDEF USE_LIBJPEG}
-  jpgData.Memory  := jpgMem.Memory;
-  jpgData.MemSize := jpgMem.Size;
-  jpgData.GetMem  := getmem_f;
-  jpgturbo_Load( jpgData, Data );
-{$ELSE}
+  jpg.Memory  := Memory.Memory;
+  jpg.MemSize := Memory.Size;
+  jpg.GetMem  := getmem_f;
+  jpgturbo_Load( jpg, Data );
+{$ENDIF}
+
+{$IFDEF USE_OLEPICTURE}
   g := 0;
   try
-    g := GlobalAlloc( GMEM_FIXED, jpgMem.Size );
+    g := GlobalAlloc( GMEM_FIXED, Memory.Size - Memory.Position );
     m := GlobalLock( g );
-    mem_Read( jpgMem, m^, jpgMem.Size );
+    Move( Pointer( Ptr( Memory.Memory ) + Memory.Position )^, m^, Memory.Size - Memory.Position );
     GlobalUnlock( g );
-    if CreateStreamOnHGlobal( Ptr( m ), FALSE, jpgData.Stream ) = S_OK Then
-      if OleLoadPicture( jpgData.Stream, 0, FALSE, IPicture, jpgData.Buffer ) = S_OK Then jpg_FillData( Data );
+    if CreateStreamOnHGlobal( Ptr( m ), FALSE, jpg.Stream ) = S_OK Then
+      if OleLoadPicture( jpg.Stream, 0, FALSE, IPicture, jpg.Buffer ) = S_OK Then jpg_FillData( jpg, Data );
   finally
     if g <> 0 Then GlobalFree( g );
+    jpg.Buffer := nil;
+    jpg.Stream := nil;
   end;
 {$ENDIF}
 
-  W      := jpgData.Width;
-  H      := jpgData.Height;
+  W      := jpg.Width;
+  H      := jpg.Height;
   Format := TEX_FORMAT_RGBA;
-
-_exit:
-  begin
-  {$IFNDEF USE_LIBJPEG}
-    jpgData.Buffer := nil;
-    jpgData.Stream := nil;
-  {$ENDIF}
-  end;
-end;
-
-procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
-begin
-  mem_LoadFromFile( jpgMem, FileName );
-  jpg_Load( Data, W, H, Format );
-  mem_Free( jpgMem );
-end;
-
-procedure jpg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
-begin
-  jpgMem.Size     := Memory.Size;
-  jpgMem.Memory   := Memory.Memory;
-  jpgMem.Position := Memory.Position;
-  jpg_Load( Data, W, H, Format );
 end;
 
 initialization

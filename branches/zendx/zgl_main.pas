@@ -29,7 +29,7 @@ uses
 
 const
   cs_ZenGL    = 'ZenGL 0.3';
-  cs_Date     = '2011.07.03';
+  cs_Date     = '2011.07.06';
   cv_major    = 0;
   cv_minor    = 3;
   cv_revision = 0;
@@ -150,6 +150,7 @@ uses
   zgl_mouse,
   zgl_keyboard,
   zgl_render_2d,
+  zgl_resources,
   zgl_textures,
   {$IFDEF USE_TEXTURE_ATLAS}
   zgl_texture_atlas,
@@ -227,6 +228,7 @@ begin
     log_Add( 'Average FPS: ' + u_IntToStr( Round( appFPSAll / appWorkTime ) ) );
 
   app_PExit();
+  res_Free();
 
   if managerTimer.Count <> 0 Then
     log_Add( 'Timers to free: ' + u_IntToStr( managerTimer.Count ) );

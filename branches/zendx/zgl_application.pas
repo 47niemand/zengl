@@ -88,6 +88,7 @@ uses
   zgl_joystick,
   {$ENDIF}
   zgl_timers,
+  zgl_resources,
   zgl_font,
   {$IFDEF USE_SOUND}
   zgl_sound,
@@ -105,7 +106,6 @@ begin
   scr_Clear();
   app_PDraw();
   scr_Flush();
-
   if not appPause Then
     INC( appFPSCount );
 end;
@@ -125,6 +125,8 @@ begin
   app_PLoad();
   scr_Flush();
 
+  res_Init();
+
   appdt := timer_GetTicks();
   timer_Reset();
   timer_Add( @app_CalcFPS, 1000 );
@@ -137,6 +139,7 @@ begin
   while appWork do
     begin
       app_ProcessOS();
+      res_Proc();
       {$IFDEF USE_JOYSTICK}
       joy_Proc();
       {$ENDIF}

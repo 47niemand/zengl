@@ -62,6 +62,9 @@ type
   zglPTextureCoord = ^zglTTextureCoord;
   zglTTextureCoord = array[ 0..3 ] of zglTPoint2D;
 
+  zglTTextureFileLoader = procedure( const FileName : String; var pData : Pointer; var W, H, Format : Word );
+  zglTTextureMemLoader  = procedure( const Memory : zglTMemory; var pData : Pointer; var W, H, Format : Word );
+
 type
   zglPTexture = ^zglTTexture;
   zglTTexture = record
@@ -81,8 +84,8 @@ type
   zglPTextureFormat = ^zglTTextureFormat;
   zglTTextureFormat = record
     Extension  : String;
-    FileLoader : procedure( const FileName : String; var pData : Pointer; var W, H, Format : Word );
-    MemLoader  : procedure( const Memory : zglTMemory; var pData : Pointer; var W, H, Format : Word );
+    FileLoader : zglTTextureFileLoader;
+    MemLoader  : zglTTextureMemLoader;
 end;
 
 type
@@ -99,7 +102,7 @@ end;
 function  tex_Add : zglPTexture;
 procedure tex_Del( var Texture : zglPTexture );
 
-procedure tex_Create( var Texture : zglTTexture; var pData : Pointer );
+procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
 function  tex_CreateZero( Width, Height : Word; Color : LongWord = $000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromFile( const FileName : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromMemory( const Memory : zglTMemory; const Extension : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
@@ -133,6 +136,7 @@ uses
   zgl_main,
   zgl_screen,
   zgl_render_2d,
+  zgl_resources,
   zgl_file,
   zgl_log,
   zgl_utils;
@@ -146,8 +150,12 @@ begin
     Result := Result.next;
 
   zgl_GetMem( Pointer( Result.next ), SizeOf( zglTTexture ) );
-  Result.next.prev := Result;
-  Result.next.next := nil;
+  Result.next.U       := 1;
+  Result.next.V       := 1;
+  Result.next.FramesX := 1;
+  Result.next.FramesY := 1;
+  Result.next.prev    := Result;
+  Result.next.next    := nil;
   Result := Result.next;
   INC( managerTexture.Count.Items );
 end;
@@ -172,43 +180,47 @@ begin
   DEC( managerTexture.Count.Items );
 end;
 
-procedure tex_Create( var Texture : zglTTexture; var pData : Pointer );
+procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
+  var
+    width   : Integer;
+    height  : Integer;
 begin
-  tex_CalcFlags( Texture, pData );
   if Texture.Flags and TEX_COMPRESS >= 1 Then
     if not oglCanCompress Then
       Texture.Flags := Texture.Flags xor TEX_COMPRESS;
+
+  width  := Round( Texture.Width / Texture.U );
+  height := Round( Texture.Height / Texture.V );
 
   glEnable( GL_TEXTURE_2D );
   glGenTextures( 1, @Texture.ID );
 
   tex_Filter( @Texture, Texture.Flags );
   glBindTexture( GL_TEXTURE_2D, Texture.ID );
+
   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
 
   if ( not oglCanAutoMipMap ) and ( Texture.Flags and TEX_MIPMAP > 0 ) Then
     begin
       if Texture.Flags and TEX_COMPRESS = 0 Then
-        gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGBA, Texture.Width, Texture.Height, GL_RGBA, GL_UNSIGNED_BYTE, pData )
+        gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGBA, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pData )
       else
-        gluBuild2DMipmaps( GL_TEXTURE_2D, GL_COMPRESSED_RGBA_ARB, Texture.Width, Texture.Height, GL_RGBA, GL_UNSIGNED_BYTE, pData );
+        gluBuild2DMipmaps( GL_TEXTURE_2D, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pData );
     end else
       begin
         if Texture.Flags and TEX_COMPRESS = 0 Then
-          glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, Texture.Width, Texture.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData )
-        else
-          glTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_ARB, Texture.Width, Texture.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData );
+          begin
+            case Texture.Format of
+              TEX_FORMAT_RGBA: glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData );
+              TEX_FORMAT_RGBA_DXT1: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, width, height, 0, width * height div 2, pData );
+              TEX_FORMAT_RGBA_DXT3: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, width, height, 0, width * height, pData );
+              TEX_FORMAT_RGBA_DXT5: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, width, height, 0, width * height, pData );
+            end;
+          end else
+            glTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData );
       end;
 
   glDisable( GL_TEXTURE_2D );
-
-  if Texture.Flags and TEX_CONVERT_TO_POT > 0 Then
-    begin
-      Texture.Width  := Round( Texture.Width * Texture.U );
-      Texture.Height := Round( Texture.Height * Texture.V );
-    end;
-
-  tex_CalcTexCoords( Texture );
 end;
 
 function tex_CreateZero( Width, Height : Word; Color, Flags : LongWord ) : zglPTexture;
@@ -220,15 +232,13 @@ begin
   for i := 0 to Width * Height - 1 do
     Move( Color, Pointer( Ptr( pData ) + i * 4 )^, 4 );
 
-  Result         := tex_Add();
-  Result.Width   := Width;
-  Result.Height  := Height;
-  Result.U       := 1;
-  Result.V       := 1;
-  Result.FramesX := 1;
-  Result.FramesY := 1;
-  Result.Flags   := Flags;
-  Result.Format  := TEX_FORMAT_RGBA;
+  Result        := tex_Add();
+  Result.Width  := Width;
+  Result.Height := Height;
+  Result.Flags  := Flags;
+  Result.Format := TEX_FORMAT_RGBA;
+  tex_CalcFlags( Result^, pData );
+  tex_CalcTexCoords( Result^ );
   tex_Create( Result^, pData );
 
   FreeMem( pData );
@@ -240,6 +250,7 @@ function tex_LoadFromFile( const FileName : String; TransparentColor, Flags : Lo
     pData  : Pointer;
     w, h   : Word;
     format : Word;
+    res    : zglTTextureResource;
 begin
   Result := nil;
   pData  := nil;
@@ -256,7 +267,18 @@ begin
 
   for i := managerTexture.Count.Formats - 1 downto 0 do
     if u_StrUp( file_GetExtension( FileName ) ) = managerTexture.Formats[ i ].Extension Then
-      managerTexture.Formats[ i ].FileLoader( FileName, pData, w, h, format );
+      if resQueueState = QUEUE_STATE_START Then
+        begin
+          Result               := tex_Add();
+          res.FileName         := FileName;
+          res.Texture          := Result;
+          res.FileLoader       := managerTexture.Formats[ i ].FileLoader;
+          res.TransparentColor := TransparentColor;
+          res.Flags            := Flags;
+          res_AddToQueue( RES_TEXTURE, TRUE, @res );
+          exit;
+        end else
+          managerTexture.Formats[ i ].FileLoader( FileName, pData, w, h, format );
 
   if not Assigned( pData ) Then
     begin
@@ -264,15 +286,11 @@ begin
       exit;
     end;
 
-  Result         := tex_Add();
-  Result.Width   := w;
-  Result.Height  := h;
-  Result.U       := 1;
-  Result.V       := 1;
-  Result.FramesX := 1;
-  Result.FramesY := 1;
-  Result.Flags   := Flags;
-  Result.Format  := format;
+  Result        := tex_Add();
+  Result.Width  := w;
+  Result.Height := h;
+  Result.Flags  := Flags;
+  Result.Format := format;
   if Result.Format = TEX_FORMAT_RGBA Then
     begin
       if Result.Flags and TEX_CALCULATE_ALPHA > 0 Then
@@ -282,6 +300,8 @@ begin
         end else
           tex_CalcTransparent( pData, TransparentColor, w, h );
     end;
+  tex_CalcFlags( Result^, pData );
+  tex_CalcTexCoords( Result^ );
   tex_Create( Result^, pData );
 
   log_Add( 'Texture loaded: "' + FileName + '"' );
@@ -295,6 +315,7 @@ function tex_LoadFromMemory( const Memory : zglTMemory; const Extension : String
     pData  : Pointer;
     w, h   : Word;
     format : Word;
+    res    : zglTTextureResource;
 begin
   Result := nil;
   pData  := nil;
@@ -305,7 +326,18 @@ begin
 
   for i := managerTexture.Count.Formats - 1 downto 0 do
     if u_StrUp( Extension ) = managerTexture.Formats[ i ].Extension Then
-      managerTexture.Formats[ i ].MemLoader( Memory, pData, w, h, format );
+      if resQueueState = QUEUE_STATE_START Then
+        begin
+          Result               := tex_Add();
+          res.Memory           := Memory;
+          res.Texture          := Result;
+          res.MemLoader        := managerTexture.Formats[ i ].MemLoader;
+          res.TransparentColor := TransparentColor;
+          res.Flags            := Flags;
+          res_AddToQueue( RES_TEXTURE, FALSE, @res );
+          exit;
+        end else
+          managerTexture.Formats[ i ].MemLoader( Memory, pData, w, h, format );
 
   if not Assigned( pData ) Then
     begin
@@ -313,15 +345,11 @@ begin
       exit;
     end;
 
-  Result         := tex_Add();
-  Result.Width   := w;
-  Result.Height  := h;
-  Result.U       := 1;
-  Result.V       := 1;
-  Result.FramesX := 1;
-  Result.FramesY := 1;
-  Result.Flags   := Flags;
-  Result.Format  := format;
+  Result        := tex_Add();
+  Result.Width  := w;
+  Result.Height := h;
+  Result.Flags  := Flags;
+  Result.Format := format;
   if Result.Format = TEX_FORMAT_RGBA Then
     begin
       if Result.Flags and TEX_CALCULATE_ALPHA > 0 Then
@@ -331,20 +359,33 @@ begin
         end else
           tex_CalcTransparent( pData, TransparentColor, w, h );
     end;
+  tex_CalcFlags( Result^, pData );
+  tex_CalcTexCoords( Result^ );
   tex_Create( Result^, pData );
 
   FreeMem( pData );
 end;
 
 procedure tex_SetFrameSize( var Texture : zglPTexture; FrameWidth, FrameHeight : Word );
+  var
+    res : zglTTextureFrameSizeResource;
 begin
-  if not Assigned( Texture ) Then exit;
+  if resQueueState = QUEUE_STATE_START Then
+    begin
+      res.Texture     := Texture;
+      res.FrameWidth  := FrameWidth;
+      res.FrameHeight := FrameHeight;
+      res_AddToQueue( RES_TEXTURE_FRAMESIZE, TRUE, @res );
+    end else
+      begin
+        if not Assigned( Texture ) Then exit;
 
-  Texture.FramesX := Round( Texture.Width ) div FrameWidth;
-  Texture.FramesY := Round( Texture.Height ) div FrameHeight;
-  if Texture.FramesX = 0 Then Texture.FramesX := 1;
-  if Texture.FramesY = 0 Then Texture.FramesY := 1;
-  tex_CalcTexCoords( Texture^ );
+        Texture.FramesX := Round( Texture.Width ) div FrameWidth;
+        Texture.FramesY := Round( Texture.Height ) div FrameHeight;
+        if Texture.FramesX = 0 Then Texture.FramesX := 1;
+        if Texture.FramesY = 0 Then Texture.FramesY := 1;
+        tex_CalcTexCoords( Texture^ );
+      end;
 end;
 
 function tex_SetMask( var Texture : zglPTexture; Mask : zglPTexture ) : zglPTexture;
@@ -373,18 +414,16 @@ begin
         PByte( Ptr( pData ) + i * 4 + j * Texture.Width * 4 + 3 )^ := PByte( Ptr( mData ) + i * 4 + j * mW * 4 + 0 )^;
       end;
 
-  Result         := tex_Add();
-  Result.Width   := Texture.Width;
-  Result.Height  := Texture.Height;
-  Result.U       := 1;
-  Result.V       := 1;
-  Result.FramesX := 1;
-  Result.FramesY := 1;
-  Result.Flags   := Texture.Flags;
+  Result        := tex_Add();
+  Result.Width  := Texture.Width;
+  Result.Height := Texture.Height;
+  Result.Flags  := Texture.Flags;
   if Result.Flags and TEX_GRAYSCALE > 0 Then
     Result.Flags := Result.Flags xor TEX_GRAYSCALE;
   if Result.Flags and TEX_INVERT > 0 Then
     Result.Flags := Result.Flags xor TEX_INVERT;
+  tex_CalcFlags( Result^, pData );
+  tex_CalcTexCoords( Result^ );
   tex_Create( Result^, pData );
   tex_Del( Texture );
 
@@ -542,7 +581,12 @@ begin
   if Texture.Flags and TEX_CUSTOM_EFFECT > 0 Then
     tex_CalcCustomEffect( pData, Texture.Width, Texture.Height );
   if Texture.Flags and TEX_CONVERT_TO_POT > 0 Then
-    tex_CalcPOT( pData, Texture.Width, Texture.Height, Texture.U, Texture.V );
+    begin
+      tex_CalcPOT( pData, Texture.Width, Texture.Height, Texture.U, Texture.V );
+
+      Texture.Width  := Round( Texture.Width * Texture.U );
+      Texture.Height := Round( Texture.Height * Texture.V );
+    end;
 end;
 
 procedure tex_CalcPOT( var pData : Pointer; var Width, Height : Word; var U, V : Single );

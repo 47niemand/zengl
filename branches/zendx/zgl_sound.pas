@@ -58,6 +58,9 @@ type
   zglPSoundFormat  = ^zglTSoundFormat;
   zglPSoundManager = ^zglTSoundManager;
 
+  zglTSoundFileLoader = procedure( const FileName : String; var Data : Pointer; var Size, Format, Frequency : LongWord );
+  zglTSoundMemLoader  = procedure( const Memory : zglTMemory; var Data : Pointer; var Size, Format, Frequency : LongWord );
+
   zglTSoundChannel = record
     {$IFDEF USE_OPENAL}
     Source     : LongWord;
@@ -118,8 +121,8 @@ type
   zglTSoundFormat = record
     Extension  : String;
     Decoder    : zglPSoundDecoder;
-    FileLoader : procedure( const FileName : String; var Data : Pointer; var Size, Format, Frequency : LongWord );
-    MemLoader  : procedure( const Memory : zglTMemory; var Data : Pointer; var Size, Format, Frequency : LongWord );
+    FileLoader : zglTSoundFileLoader;
+    MemLoader  : zglTSoundMemLoader;
   end;
 
   zglTSoundManager = record
@@ -136,6 +139,7 @@ function  snd_Init : Boolean;
 procedure snd_Free;
 function  snd_Add( SourceCount : Integer ) : zglPSound;
 procedure snd_Del( var Sound : zglPSound );
+procedure snd_Create( var Sound : zglTSound; Format : LongWord );
 function  snd_LoadFromFile( const FileName : String; SourceCount : Integer = 8 ) : zglPSound;
 function  snd_LoadFromMemory( const Memory : zglTMemory; const Extension : String; SourceCount : Integer = 8 ) : zglPSound;
 
@@ -193,6 +197,7 @@ uses
   zgl_main,
   zgl_window,
   zgl_timers,
+  zgl_resources,
   zgl_log,
   zgl_utils;
 
@@ -495,13 +500,68 @@ begin
   DEC( managerSound.Count.Items );
 end;
 
+procedure snd_Create( var Sound : zglTSound; Format : LongWord );
+  {$IFNDEF USE_OPENAL}
+  var
+    i        : Integer;
+    buffDesc : zglTBufferDesc;
+  {$ENDIF}
+begin
+  case Format of
+    {$IFDEF USE_OPENAL}
+    SND_FORMAT_MONO8: Format := AL_FORMAT_MONO8;
+    SND_FORMAT_MONO16: Format := AL_FORMAT_MONO16;
+    SND_FORMAT_STEREO8: Format := AL_FORMAT_STEREO8;
+    SND_FORMAT_STEREO16: Format := AL_FORMAT_STEREO16;
+    {$ELSE}
+    SND_FORMAT_MONO8:
+      begin
+        buffDesc.ChannelNumber := 1;
+        buffDesc.BitsPerSample := 8;
+      end;
+    SND_FORMAT_MONO16:
+      begin
+        buffDesc.ChannelNumber := 1;
+        buffDesc.BitsPerSample := 16;
+      end;
+    SND_FORMAT_STEREO8:
+      begin
+        buffDesc.ChannelNumber := 2;
+        buffDesc.BitsPerSample := 8;
+      end;
+    SND_FORMAT_STEREO16:
+      begin
+        buffDesc.ChannelNumber := 2;
+        buffDesc.BitsPerSample := 16;
+      end;
+    {$ENDIF}
+  end;
+
+{$IFDEF USE_OPENAL}
+  alBufferData( Sound.Buffer, Format, Sound.Data, Sound.Size, Sound.Frequency );
+  FreeMem( Sound.Data );
+{$ELSE}
+  with buffDesc do
+    begin
+      FormatCode     := 1;
+      SampleRate     := Sound.Frequency;
+      BytesPerSample := ( BitsPerSample div 8 ) * ChannelNumber;
+      BytesPerSecond := SampleRate * BytesPerSample;
+      cbSize         := SizeOf( buffDesc );
+    end;
+
+  dsu_CreateBuffer( Sound.Channel[ 0 ].Source, Sound.Size, @buffDesc );
+  dsu_FillData( Sound.Channel[ 0 ].Source, Sound.Data, Sound.Size );
+  for i := 1 to Sound.SourceCount - 1 do
+    dsDevice.DuplicateSoundBuffer( Sound.Channel[ 0 ].Source, Sound.Channel[ i ].Source );
+{$ENDIF}
+end;
+
 function snd_LoadFromFile( const FileName : String; SourceCount : Integer = 8 ) : zglPSound;
   var
     i   : Integer;
     fmt : LongWord;
-  {$IFNDEF USE_OPENAL}
-    buffDesc : zglTBufferDesc;
-  {$ENDIF}
+    res : zglTSoundResource;
 begin
   Result := nil;
 
@@ -516,7 +576,15 @@ begin
 
   for i := managerSound.Count.Formats - 1 downto 0 do
     if u_StrUp( file_GetExtension( FileName ) ) = managerSound.Formats[ i ].Extension Then
-      managerSound.Formats[ i ].FileLoader( FileName, Result.Data, Result.Size, fmt, Result.Frequency );
+      if resQueueState = QUEUE_STATE_START Then
+        begin
+          res.FileName   := FileName;
+          res.Sound      := Result;
+          res.FileLoader := managerSound.Formats[ i ].FileLoader;
+          res_AddToQueue( RES_SOUND, TRUE, @res );
+          exit;
+        end else
+          managerSound.Formats[ i ].FileLoader( FileName, Result.Data, Result.Size, fmt, Result.Frequency );
 
   if not Assigned( Result.Data ) Then
     begin
@@ -525,71 +593,17 @@ begin
       exit;
     end;
 
-  case fmt of
-    {$IFDEF USE_OPENAL}
-    SND_FORMAT_MONO8: fmt := AL_FORMAT_MONO8;
-    SND_FORMAT_MONO16: fmt := AL_FORMAT_MONO16;
-    SND_FORMAT_STEREO8: fmt := AL_FORMAT_STEREO8;
-    SND_FORMAT_STEREO16: fmt := AL_FORMAT_STEREO16;
-    {$ELSE}
-    SND_FORMAT_MONO8:
-      begin
-        buffDesc.ChannelNumber := 1;
-        buffDesc.BitsPerSample := 8;
-      end;
-    SND_FORMAT_MONO16:
-      begin
-        buffDesc.ChannelNumber := 1;
-        buffDesc.BitsPerSample := 16;
-      end;
-    SND_FORMAT_STEREO8:
-      begin
-        buffDesc.ChannelNumber := 2;
-        buffDesc.BitsPerSample := 8;
-      end;
-    SND_FORMAT_STEREO16:
-      begin
-        buffDesc.ChannelNumber := 2;
-        buffDesc.BitsPerSample := 16;
-      end;
-    {$ENDIF}
-  else
-    begin
-      log_Add( 'Unable to determinate sound format: "' + FileName + '"' );
-      snd_Del( Result );
-      exit;
-    end;
-  end;
+  snd_Create( Result^, fmt );
 
-{$IFDEF USE_OPENAL}
-  alBufferData( Result.Buffer, fmt, Result.Data, Result.Size, Result.Frequency );
-  FreeMem( Result.Data );
-{$ELSE}
-  with buffDesc do
-    begin
-      FormatCode     := 1;
-      SampleRate     := Result.Frequency;
-      BytesPerSample := ( BitsPerSample div 8 ) * ChannelNumber;
-      BytesPerSecond := SampleRate * BytesPerSample;
-      cbSize         := SizeOf( buffDesc );
-    end;
-
-  dsu_CreateBuffer( Result.Channel[ 0 ].Source, Result.Size, @buffDesc );
-  dsu_FillData( Result.Channel[ 0 ].Source, Result.Data, Result.Size );
-  for i := 1 to Result.SourceCount - 1 do
-    dsDevice.DuplicateSoundBuffer( Result.Channel[ 0 ].Source, Result.Channel[ i ].Source );
-{$ENDIF}
-
-  log_Add( 'Sound loaded: "' + FileName + '"' );
+  if Assigned( Result ) Then
+    log_Add( 'Sound loaded: "' + FileName + '"' );
 end;
 
 function snd_LoadFromMemory( const Memory : zglTMemory; const Extension : String; SourceCount : Integer = 8 ) : zglPSound;
   var
     i   : Integer;
     fmt : LongWord;
-  {$IFNDEF USE_OPENAL}
-    buffDesc : zglTBufferDesc;
-  {$ENDIF}
+    res : zglTSoundResource;
 begin
   Result := nil;
 
@@ -599,7 +613,15 @@ begin
 
   for i := managerSound.Count.Formats - 1 downto 0 do
     if u_StrUp( Extension ) = managerSound.Formats[ i ].Extension Then
-      managerSound.Formats[ i ].MemLoader( Memory, Result.Data, Result.Size, fmt, Result.Frequency );
+      if resQueueState = QUEUE_STATE_START Then
+        begin
+          res.Memory    := Memory;
+          res.Sound     := Result;
+          res.MemLoader := managerSound.Formats[ i ].MemLoader;
+          res_AddToQueue( RES_SOUND, FALSE, @res );
+          exit;
+        end else
+          managerSound.Formats[ i ].MemLoader( Memory, Result.Data, Result.Size, fmt, Result.Frequency );
 
   if not Assigned( Result.Data ) Then
     begin
@@ -608,60 +630,7 @@ begin
       exit;
     end;
 
-  case fmt of
-    {$IFDEF USE_OPENAL}
-    SND_FORMAT_MONO8: fmt := AL_FORMAT_MONO8;
-    SND_FORMAT_MONO16: fmt := AL_FORMAT_MONO16;
-    SND_FORMAT_STEREO8: fmt := AL_FORMAT_STEREO8;
-    SND_FORMAT_STEREO16: fmt := AL_FORMAT_STEREO16;
-    {$ELSE}
-    SND_FORMAT_MONO8:
-      begin
-        buffDesc.ChannelNumber := 1;
-        buffDesc.BitsPerSample := 8;
-      end;
-    SND_FORMAT_MONO16:
-      begin
-        buffDesc.ChannelNumber := 1;
-        buffDesc.BitsPerSample := 16;
-      end;
-    SND_FORMAT_STEREO8:
-      begin
-        buffDesc.ChannelNumber := 2;
-        buffDesc.BitsPerSample := 8;
-      end;
-    SND_FORMAT_STEREO16:
-      begin
-        buffDesc.ChannelNumber := 2;
-        buffDesc.BitsPerSample := 16;
-      end;
-    {$ENDIF}
-  else
-    begin
-      log_Add( 'Unable to determinate sound format: From memory' );
-      snd_Del( Result );
-      exit;
-    end;
-  end;
-
-{$IFDEF USE_OPENAL}
-  alBufferData( Result.Buffer, fmt, Result.Data, Result.Size, Result.Frequency );
-  FreeMem( Result.Data );
-{$ELSE}
-  with buffDesc do
-    begin
-      FormatCode     := 1;
-      SampleRate     := Result.Frequency;
-      BytesPerSample := ( BitsPerSample div 8 ) * ChannelNumber;
-      BytesPerSecond := SampleRate * BytesPerSample;
-      cbSize         := SizeOf( buffDesc );
-    end;
-
-  dsu_CreateBuffer( Result.Channel[ 0 ].Source, Result.Size, @buffDesc );
-  dsu_FillData( Result.Channel[ 0 ].Source, Result.Data, Result.Size );
-  for i := 1 to Result.SourceCount - 1 do
-    dsDevice.DuplicateSoundBuffer( Result.Channel[ 0 ].Source, Result.Channel[ i ].Source );
-{$ENDIF}
+  snd_Create( Result^, fmt );
 end;
 
 function snd_Play( Sound : zglPSound; Loop : Boolean = FALSE; X : Single = 0; Y : Single = 0; Z : Single = 0 ) : Integer;

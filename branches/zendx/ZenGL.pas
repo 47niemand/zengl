@@ -41,6 +41,8 @@ uses
   zgl_joystick,
   {$ENDIF}
 
+  zgl_resources,
+
   zgl_textures,
   zgl_textures_jpg,
   zgl_textures_png,
@@ -173,6 +175,10 @@ exports
   joy_Press                name prefix + 'joy_Press',
   joy_ClearState           name prefix + 'joy_ClearState',
   {$ENDIF}
+
+  res_BeginQueue           name prefix + 'res_BeginQueue',
+  res_EndQueue             name prefix + 'res_EndQueue',
+  res_Proc                 name prefix + 'res_Proc',
 
   // Textures
   tex_Add                  name prefix + 'tex_Add',

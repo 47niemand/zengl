@@ -107,6 +107,10 @@ const
   GL_RGBA16                         = $805B;
   GL_COMPRESSED_RGB_ARB             = $84ED;
   GL_COMPRESSED_RGBA_ARB            = $84EE;
+  GL_COMPRESSED_RGB_S3TC_DXT1_EXT   = $83F0;
+  GL_COMPRESSED_RGBA_S3TC_DXT1_EXT  = $83F1;
+  GL_COMPRESSED_RGBA_S3TC_DXT3_EXT  = $83F2;
+  GL_COMPRESSED_RGBA_S3TC_DXT5_EXT  = $83F3;
   // Texture Env Mode
   GL_MODULATE                       = $2100;
   GL_DECAL                          = $2101;
@@ -289,6 +293,7 @@ procedure glTexParameterf(target: GLenum; pname: GLenum; param: GLfloat);
 procedure glTexParameteri(target: GLenum; pname: GLenum; param: GLint);
 procedure glPixelStorei(pname: GLenum; param: GLint);
 procedure glTexImage2D(target: GLenum; level, internalformat: GLint; width, height: GLsizei; border: GLint; format, atype: GLenum; const pixels: Pointer);
+procedure glCompressedTexImage2D(target: GLenum; level, internalformat: GLint; width, height: GLsizei; border: GLint; imageSize: GLsizei; const pixels: Pointer);
 procedure glTexSubImage2D(target: GLenum; level, xoffset, yoffset: GLint; width, height: GLsizei; format, atype: GLenum; const pixels: Pointer);
 procedure glGetTexImage(target: GLenum; level: GLint; format: GLenum; atype: GLenum; pixels: Pointer);
 procedure glCopyTexSubImage2D(target: GLenum; level, xoffset, yoffset, x, y: GLint; width, height: GLsizei);
@@ -1367,6 +1372,11 @@ begin
       d3d_FillTexture( pixels, r.pBits, width, height );
       d3dTexArray[ RenderTexID ].Texture.UnlockRect( level );
     end;
+end;
+
+procedure glCompressedTexImage2D(target: GLenum; level, internalformat: GLint; width, height: GLsizei; border: GLint; imageSize: GLsizei; const pixels: Pointer);
+begin
+
 end;
 
 procedure glTexSubImage2D(target: GLenum; level, xoffset, yoffset: GLint; width, height: GLsizei; format, atype: GLenum; const pixels: Pointer);
