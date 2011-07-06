@@ -99,7 +99,7 @@ end;
 function  tex_Add : zglPTexture;
 procedure tex_Del( var Texture : zglPTexture );
 
-procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
+procedure tex_Create( var Texture : zglTTexture; var pData : Pointer );
 function  tex_CreateZero( Width, Height : Word; Color : LongWord = $000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromFile( const FileName : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromMemory( const Memory : zglTMemory; const Extension : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
@@ -172,7 +172,7 @@ begin
   DEC( managerTexture.Count.Items );
 end;
 
-procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
+procedure tex_Create( var Texture : zglTTexture; var pData : Pointer );
 begin
   tex_CalcFlags( Texture, pData );
   if Texture.Flags and TEX_COMPRESS >= 1 Then
