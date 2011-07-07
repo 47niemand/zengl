@@ -199,7 +199,8 @@ begin
   tex_Filter( @Texture, Texture.Flags );
   glBindTexture( GL_TEXTURE_2D, Texture.ID );
 
-  if ( not oglCanS3TC ) and ( ( Texture.Format = TEX_FORMAT_RGBA_PVR2 ) or ( Texture.Format = TEX_FORMAT_RGBA_PVR4 ) ) Then
+  if ( ( not oglCanS3TC ) and ( ( Texture.Format = TEX_FORMAT_RGBA_PVR2 ) or ( Texture.Format = TEX_FORMAT_RGBA_PVR4 ) ) ) or
+    ( ( width > oglMaxTexSize ) or ( height > oglMaxTexSize ) ) Then
     begin
       glDisable( GL_TEXTURE_2D );
       exit;
