@@ -116,7 +116,7 @@ var
   oglClipR  : Integer;
 
   oglCanAnisotropy : Boolean;
-  oglCanCompress   : Boolean;
+  oglCanS3TC       : Boolean;
   oglCanAutoMipMap : Boolean;
   oglMaxTexSize    : Integer;
   oglMaxAnisotropy : Integer;

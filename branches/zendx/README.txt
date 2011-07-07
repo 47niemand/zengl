@@ -6,7 +6,6 @@ RU:
 - нет поддержки сжатых текстур
 - tex_SetData не работает для текстур используемых в качестве Render Target'а
 - нет много-поточной загрузки ресурсов
-- нет поддержки сжатых текстур
 
 EN:
 This is modified version of ZenGL, that use Direct3D 8/9 as graphics API
@@ -16,4 +15,3 @@ Difference with the original ZenGL:
 - no support of compressed textures
 - tex_SetData doesn't work with textures, that was used like Render Target
 - there is no multithreaded resource loading
-- there is no support compressed textures

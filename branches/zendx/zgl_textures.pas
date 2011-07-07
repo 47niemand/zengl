@@ -25,8 +25,6 @@ unit zgl_textures;
 interface
 
 uses
-  zgl_direct3d,
-  zgl_direct3d_all,
   zgl_math_2d,
   zgl_memory;
 
@@ -102,7 +100,7 @@ end;
 function  tex_Add : zglPTexture;
 procedure tex_Del( var Texture : zglPTexture );
 
-procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
+function  tex_Create( var Texture : zglTTexture; pData : Pointer ) : Boolean;
 function  tex_CreateZero( Width, Height : Word; Color : LongWord = $000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromFile( const FileName : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
 function  tex_LoadFromMemory( const Memory : zglTMemory; const Extension : String; TransparentColor : LongWord = $FF000000; Flags : LongWord = TEX_DEFAULT_2D ) : zglPTexture;
@@ -135,6 +133,8 @@ uses
   zgl_types,
   zgl_main,
   zgl_screen,
+  zgl_direct3d,
+  zgl_direct3d_all,
   zgl_render_2d,
   zgl_resources,
   zgl_file,
@@ -180,23 +180,30 @@ begin
   DEC( managerTexture.Count.Items );
 end;
 
-procedure tex_Create( var Texture : zglTTexture; pData : Pointer );
+function tex_Create( var Texture : zglTTexture; pData : Pointer ) : Boolean;
   var
     width   : Integer;
     height  : Integer;
 begin
   if Texture.Flags and TEX_COMPRESS >= 1 Then
-    if not oglCanCompress Then
+    if not oglCanS3TC Then
       Texture.Flags := Texture.Flags xor TEX_COMPRESS;
 
   width  := Round( Texture.Width / Texture.U );
   height := Round( Texture.Height / Texture.V );
+  Result := FALSE;
 
   glEnable( GL_TEXTURE_2D );
   glGenTextures( 1, @Texture.ID );
 
   tex_Filter( @Texture, Texture.Flags );
   glBindTexture( GL_TEXTURE_2D, Texture.ID );
+
+  if ( not oglCanS3TC ) and ( ( Texture.Format = TEX_FORMAT_RGBA_PVR2 ) or ( Texture.Format = TEX_FORMAT_RGBA_PVR4 ) ) Then
+    begin
+      glDisable( GL_TEXTURE_2D );
+      exit;
+    end;
 
   glTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
 
@@ -221,6 +228,7 @@ begin
       end;
 
   glDisable( GL_TEXTURE_2D );
+  Result := TRUE;
 end;
 
 function tex_CreateZero( Width, Height : Word; Color, Flags : LongWord ) : zglPTexture;
@@ -239,7 +247,11 @@ begin
   Result.Format := TEX_FORMAT_RGBA;
   tex_CalcFlags( Result^, pData );
   tex_CalcTexCoords( Result^ );
-  tex_Create( Result^, pData );
+  if not tex_Create( Result^, pData ) Then
+    begin
+      tex_Del( Result );
+      Result := managerZeroTexture;
+    end;
 
   FreeMem( pData );
 end;
@@ -302,7 +314,11 @@ begin
     end;
   tex_CalcFlags( Result^, pData );
   tex_CalcTexCoords( Result^ );
-  tex_Create( Result^, pData );
+  if not tex_Create( Result^, pData ) Then
+    begin
+      tex_Del( Result );
+      Result := managerZeroTexture;
+    end;
 
   log_Add( 'Texture loaded: "' + FileName + '"' );
 
@@ -361,7 +377,11 @@ begin
     end;
   tex_CalcFlags( Result^, pData );
   tex_CalcTexCoords( Result^ );
-  tex_Create( Result^, pData );
+  if not tex_Create( Result^, pData ) Then
+    begin
+      tex_Del( Result );
+      Result := managerZeroTexture;
+    end;
 
   FreeMem( pData );
 end;
@@ -424,7 +444,11 @@ begin
     Result.Flags := Result.Flags xor TEX_INVERT;
   tex_CalcFlags( Result^, pData );
   tex_CalcTexCoords( Result^ );
-  tex_Create( Result^, pData );
+  if not tex_Create( Result^, pData ) Then
+    begin
+      tex_Del( Result );
+      Result := managerZeroTexture;
+    end;
   tex_Del( Texture );
 
   FreeMem( pData );
