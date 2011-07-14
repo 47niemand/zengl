@@ -143,6 +143,24 @@ uses
 
 procedure zeroce; begin end;
 
+function tex_GetVRAM( Texture : zglPTexture ) : LongWord;
+  var
+    size : LongWord;
+begin
+  size := Round( Texture.Width / Texture.U ) * Round( Texture.Height / Texture.V );
+  case Texture.Format of
+    TEX_FORMAT_RGBA: Result := size * 4;
+    {$IFDEF USE_GLES}
+    TEX_FORMAT_RGBA_PVR2: Result := size div 4;
+    TEX_FORMAT_RGBA_PVR4: Result := size div 2;
+    {$ELSE}
+    TEX_FORMAT_RGBA_DXT1: Result := size div 2;
+    TEX_FORMAT_RGBA_DXT3: Result := size;
+    TEX_FORMAT_RGBA_DXT5: Result := size;
+    {$ENDIF}
+  end;
+end;
+
 function tex_Add : zglPTexture;
 begin
   Result := @managerTexture.First;
@@ -168,6 +186,8 @@ begin
       exit;
     end;
 
+  oglVRAMUsed := oglVRAMUsed - tex_GetVRAM( Texture );
+
   glDeleteTextures( 1, @Texture.ID );
   if Assigned( Texture.prev ) Then
     Texture.prev.next := Texture.next;
@@ -182,8 +202,9 @@ end;
 
 function tex_Create( var Texture : zglTTexture; pData : Pointer ) : Boolean;
   var
-    width   : Integer;
-    height  : Integer;
+    width  : Integer;
+    height : Integer;
+    size   : LongWord;
 begin
   if Texture.Flags and TEX_COMPRESS >= 1 Then
     if not oglCanS3TC Then
@@ -191,6 +212,7 @@ begin
 
   width  := Round( Texture.Width / Texture.U );
   height := Round( Texture.Height / Texture.V );
+  size   := tex_GetVRAM( @Texture );
   Result := FALSE;
 
   glEnable( GL_TEXTURE_2D );
@@ -220,14 +242,15 @@ begin
           begin
             case Texture.Format of
               TEX_FORMAT_RGBA: glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData );
-              TEX_FORMAT_RGBA_DXT1: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, width, height, 0, width * height div 2, pData );
-              TEX_FORMAT_RGBA_DXT3: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, width, height, 0, width * height, pData );
-              TEX_FORMAT_RGBA_DXT5: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, width, height, 0, width * height, pData );
+              TEX_FORMAT_RGBA_DXT1: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, width, height, 0, size, pData );
+              TEX_FORMAT_RGBA_DXT3: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, width, height, 0, size, pData );
+              TEX_FORMAT_RGBA_DXT5: glCompressedTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, width, height, 0, size, pData );
             end;
           end else
             glTexImage2D( GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pData );
       end;
 
+  oglVRAMUsed := oglVRAMUsed + size;
   glDisable( GL_TEXTURE_2D );
   Result := TRUE;
 end;

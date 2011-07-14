@@ -115,6 +115,8 @@ var
   oglClipH  : Integer;
   oglClipR  : Integer;
 
+  oglVRAMUSed : LongWord;
+
   oglCanAnisotropy : Boolean;
   oglCanS3TC       : Boolean;
   oglCanAutoMipMap : Boolean;
