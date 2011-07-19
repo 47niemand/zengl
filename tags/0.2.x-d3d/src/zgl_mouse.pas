@@ -75,12 +75,12 @@ end;
 
 function mouse_DX : Integer;
 begin
-  Result := mouse_X() - wndWidth div 2;
+  Result := Round( ( mouseX - wndWidth div 2 ) / scrResCX );
 end;
 
 function mouse_DY : Integer;
 begin
-  Result := mouse_Y() - wndHeight div 2;
+  Result := Round( ( mouseY - wndHeight div 2 ) / scrResCY );
 end;
 
 function mouse_Down( Button : Byte ) : Boolean;
