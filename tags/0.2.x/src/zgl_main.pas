@@ -37,7 +37,7 @@ uses
 
 const
   cs_ZenGL    = 'ZenGL 0.2.3';
-  cs_Date     = '2011.09.11';
+  cs_Date     = '2011.09.14';
   cv_major    = 0;
   cv_minor    = 2;
   cv_revision = 3;
