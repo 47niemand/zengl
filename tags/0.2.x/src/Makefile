@@ -40,6 +40,9 @@ win64: clean
 	$(FPC) ZenGL.pas -Fu../lib/jpeg/x86_64-win64 -Fu../lib/msvcrt/x86_64 -Fu../lib/ogg/x86_64-win64 -Fu../lib/zlib/x86_64-win64 $(TMP) $(FLAGS) -o$(TARGETW) -TWIN64 -Px86_64 -WG
 
 macos: clean
+	$(FPC) ZenGL.pas $(LIBS) -FE$(OUTPUT) $(TMP) $(FLAGS) -o$(TARGETM) -TDARWIN -Pi386 -k"-no_order_inits" -k"-no_order_data" -k"-macosx_version_min 10.4"
+
+macos_uni: clean
 	$(FPC) ZenGL.pas $(LIBS) -FE$(OUTPUT) $(TMP) $(FLAGS) -o$(TARGETM)-386 -TDARWIN -Pi386 -k"-no_order_inits" -k"-no_order_data" -k"-macosx_version_min 10.4"
 	$(FPC) ZenGL.pas $(LIBSPPC) -FE$(OUTPUT) $(TMP) $(FLAGS) -o$(TARGETM)-ppc -TDARWIN -Ppowerpc -k"-no_order_inits" -k"-no_order_data" -k"-macosx_version_min 10.4"
 	lipo -create $(OUTPUT)$(TARGETM)-ppc $(OUTPUT)$(TARGETM)-386 -output $(OUTPUT)$(TARGETM)
