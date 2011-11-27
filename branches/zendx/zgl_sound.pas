@@ -155,7 +155,7 @@ function  snd_PlayMemory( const Memory : zglTMemory; const Extension : String; L
 procedure snd_PauseFile( ID : Integer );
 procedure snd_StopFile( ID : Integer );
 procedure snd_ResumeFile( ID : Integer );
-function  snd_ProcFile( data : Pointer ) : LongInt; register;
+function  snd_ProcFile( data : Pointer ) : LongInt;
 
 var
   managerSound : zglTSoundManager;
@@ -576,7 +576,7 @@ begin
 
   for i := managerSound.Count.Formats - 1 downto 0 do
     if u_StrUp( file_GetExtension( FileName ) ) = managerSound.Formats[ i ].Extension Then
-      if resQueueState = QUEUE_STATE_START Then
+      if resUseThreaded Then
         begin
           res.FileName   := FileName;
           res.Sound      := Result;
@@ -613,7 +613,7 @@ begin
 
   for i := managerSound.Count.Formats - 1 downto 0 do
     if u_StrUp( Extension ) = managerSound.Formats[ i ].Extension Then
-      if resQueueState = QUEUE_STATE_START Then
+      if resUseThreaded Then
         begin
           res.Memory    := Memory;
           res.Sound     := Result;
@@ -1214,7 +1214,7 @@ begin
 {$ENDIF}
 end;
 
-function snd_ProcFile( data : Pointer ) : LongInt; register;
+function snd_ProcFile( data : Pointer ) : LongInt;
   var
     id        : Integer;
     _end      : Boolean;

@@ -54,7 +54,7 @@ unit zgl_sound_ogg;
 
 interface
 uses
-  zgl_msvcrt,
+  zgl_lib_msvcrt,
   zgl_memory;
 
 const

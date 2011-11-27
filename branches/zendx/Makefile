@@ -12,6 +12,7 @@ win32: clean
 	-Fu../lib/msvcrt/i386 \
 	-Fu../lib/ogg/i386-win32 \
 	-Fu../lib/zlib/i386-win32 \
+	-Fu../lib/zip/i386-win32 \
 	$(TMP) $(FLAGS) -o$(TARGET) -TWIN32 -Pi386 -WG
 
 win64: clean
@@ -20,6 +21,7 @@ win64: clean
 	-Fu../lib/msvcrt/x86_64 \
 	-Fu../lib/ogg/x86_64-win64 \
 	-Fu../lib/zlib/x86_64-win64 \
+	-Fu../lib/zip/x86_64-win64 \
 	$(TMP) $(FLAGS) -o$(TARGET) -TWIN64 -Px86_64 -WG
 
 clean:

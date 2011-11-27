@@ -93,7 +93,7 @@ begin
   file_Write( log, str[ 1 ], length( str ) );
 
   {$IFDEF USE_LOG_FLUSH}
-  log_Flush;
+  log_Flush();
   {$ENDIF}
 end;
 
@@ -108,7 +108,7 @@ function log_Timing : AnsiString;
     v : LongWord;
 begin
   v := Round( timer_GetTicks() ) - logstart;
-  case V of
+  case v of
     0..9:               Result := '[0000000' + u_IntToStr( v ) + 'ms] ';
     10..99:             Result := '[000000'  + u_IntToStr( v ) + 'ms] ';
     100..999:           Result := '[00000'   + u_IntToStr( v ) + 'ms] ';

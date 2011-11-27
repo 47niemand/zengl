@@ -26,6 +26,9 @@ interface
 
 uses
   Windows,
+  {$IFDEF USE_ZIP}
+  zgl_lib_zip,
+  {$ENDIF}
   zgl_types;
 
 type zglTFile = THandle;
@@ -33,7 +36,7 @@ type zglTFile = THandle;
 type zglTFileList = zglTStringList;
 
 const
-  FILE_ERROR = LongWord( -1 );
+  FILE_ERROR = Ptr( -1 );
 
   // Open Mode
   FOM_CREATE = $01; // Create
@@ -62,16 +65,25 @@ function  file_GetExtension( const FileName : String ) : String;
 function  file_GetDirectory( const FileName : String ) : String;
 procedure file_SetPath( const Path : String );
 
+{$IFDEF USE_ZIP}
+function  file_OpenArchive( const FileName : String; const Password : String = '' ) : Boolean;
+procedure file_CloseArchive;
+{$ENDIF}
+
 function _file_GetName( const FileName : String ) : PChar;
 function _file_GetExtension( const FileName : String ) : PChar;
 function _file_GetDirectory( const FileName : String ) : PChar;
 
 implementation
 uses
+  zgl_main,
   zgl_utils;
 
 var
   filePath : String = '';
+  {$IFDEF USE_ZIP}
+  zipCurrent : Pzip;
+  {$ENDIF}
 
 function GetDir( const Path : String ) : String;
   var
@@ -86,8 +98,28 @@ end;
 
 function file_Open( var FileHandle : zglTFile; const FileName : String; Mode : Byte ) : Boolean;
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      zgl_GetMem( Pointer( FileHandle ), SizeOf( zglZipFile ) );
+      zglPZipFile( FileHandle ).file_ := zip_fopen( zipCurrent, PAnsiChar( filePath + FileName ), ZIP_FL_UNCHANGED );
+      if not Assigned( zglPZipFile( FileHandle ).file_ ) Then
+        zgl_FreeMem( Pointer( FileHandle ) )
+      else
+        zglPZipFile( FileHandle ).name := u_GetPAnsiChar( filePath + FileName );
+
+      Result := FileHandle <> 0;
+      if ( Mode = FOM_CREATE ) or ( Mode = FOM_OPENRW ) Then
+        begin
+          FileHandle := 0;
+          Result := FALSE;
+        end;
+      exit;
+    end;
+  {$ENDIF}
+
   case Mode of
-    FOM_CREATE: FileHandle := CreateFile( PChar( filePath + FileName ), GENERIC_ALL, 0, nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
+    FOM_CREATE: FileHandle := CreateFile( PChar( filePath + FileName ), GENERIC_READ or GENERIC_WRITE, 0, nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
     FOM_OPENR:  FileHandle := CreateFile( PChar( filePath + FileName ), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0 );
     FOM_OPENRW: FileHandle := CreateFile( PChar( filePath + FileName ), GENERIC_READ or GENERIC_WRITE, FILE_SHARE_READ or FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0 );
   end;
@@ -96,7 +128,15 @@ end;
 
 function file_MakeDir( const Directory : String ) : Boolean;
 begin
-  Result := CreateDirectory( PChar( Directory ), nil );
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      Result := FALSE;
+      exit;
+    end;
+  {$ENDIF}
+
+  Result := CreateDirectory( PChar( filePath + Directory ), nil );
 end;
 
 function file_Remove( const Name : String ) : Boolean;
@@ -107,6 +147,14 @@ function file_Remove( const Name : String ) : Boolean;
     path : String;
     list : zglTFileList;
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      Result := FALSE;
+      exit;
+    end;
+  {$ENDIF}
+
   if not file_Exists( Name ) Then
     begin
       Result := FALSE;
@@ -134,12 +182,31 @@ begin
 end;
 
 function file_Exists( const Name : String ) : Boolean;
+  {$IFDEF USE_ZIP}
+  var
+    zipStat : Tzip_stat;
+  {$ENDIF}
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      Result := zip_stat( zipCurrent, PAnsiChar( Name ), 0, zipStat ) = 0;
+      exit;
+    end;
+  {$ENDIF}
   Result := GetFileAttributes( PChar( filePath + Name ) ) <> $FFFFFFFF;
 end;
 
 function file_Seek( FileHandle : zglTFile; Offset, Mode : Integer ) : LongWord;
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      Result := 0;
+      exit;
+    end;
+  {$ENDIF}
+
   case Mode of
     FSM_SET: Result := SetFilePointer( FileHandle, Offset, nil, FILE_BEGIN );
     FSM_CUR: Result := SetFilePointer( FileHandle, Offset, nil, FILE_CURRENT );
@@ -149,41 +216,119 @@ end;
 
 function file_GetPos( FileHandle : zglTFile ) : LongWord;
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      Result := 0;
+      exit;
+    end;
+  {$ENDIF}
+
   Result := SetFilePointer( FileHandle, 0, nil, FILE_CURRENT );
 end;
 
 function file_Read( FileHandle : zglTFile; var Buffer; Bytes : LongWord ) : LongWord;
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      Result := zip_fread( zglPZipFile( FileHandle ).file_, Buffer, Bytes );
+      exit;
+    end;
+  {$ENDIF}
+
   ReadFile( FileHandle, Buffer, Bytes, Result, nil );
 end;
 
 function file_Write( FileHandle : zglTFile; const Buffer; Bytes : LongWord ) : LongWord;
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      Result := 0;
+      exit;
+    end;
+  {$ENDIF}
   WriteFile( FileHandle, Buffer, Bytes, Result, nil );
 end;
 
 function file_GetSize( FileHandle : zglTFile ) : LongWord;
+  {$IFDEF USE_ZIP}
+  var
+    zipStat : Tzip_stat;
+  {$ENDIF}
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      if zip_stat( zipCurrent, zglPZipFile( FileHandle ).name, 0, zipStat ) = 0 Then
+        Result := zipStat.size;
+      exit;
+    end;
+  {$ENDIF}
+
   Result := GetFileSize( FileHandle, nil );
 end;
 
 procedure file_Flush( FileHandle : zglTFile );
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then exit;
+  {$ENDIF}
+
   FlushFileBuffers( FileHandle );
 end;
 
 procedure file_Close( var FileHandle : zglTFile );
 begin
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      zip_fclose( zglPZipFile( FileHandle ).file_ );
+      zgl_FreeMem( Pointer( zglPZipFile( FileHandle ).name ) );
+      zgl_FreeMem( Pointer( FileHandle ) );
+      FileHandle := 0;
+      exit;
+    end;
+  {$ENDIF}
+
   CloseHandle( FileHandle );
-  FileHandle := 0;
+  FileHandle := FILE_ERROR;
 end;
 
 procedure file_Find( const Directory : String; var List : zglTFileList; FindDir : Boolean );
   var
     First : THandle;
-    FList : {$IFDEF FPC} WIN32FINDDATAA {$ELSE} WIN32_FIND_DATA {$ENDIF};
+    FList : WIN32_FIND_DATA;
+  {$IFDEF USE_ZIP}
+    count : Integer;
+    name  : PAnsiChar;
+    len   : Integer;
+  {$ENDIF}
 begin
   List.Count := 0;
+
+  {$IFDEF USE_ZIP}
+  if Assigned( zipCurrent ) Then
+    begin
+      for count := 0 to zip_get_num_entries( zipCurrent, ZIP_FL_UNCHANGED ) do
+        begin
+          name := zip_get_name( zipCurrent, count, ZIP_FL_UNCHANGED );
+          len  := Length( name );
+          if ( file_GetDirectory( name ) = Directory ) and ( ( FindDir and ( name[ len - 1 ] = '/' ) ) or ( ( not FindDir ) and ( name[ len - 1 ] <> '/' ) ) ) Then
+            begin
+              SetLength( List.Items, List.Count + 1 );
+              List.Items[ List.Count ] := u_CopyStr( name );
+              INC( List.Count );
+            end;
+        end;
+
+      if List.Count > 2 Then
+        u_SortList( List, 0, List.Count - 1 );
+      exit;
+    end;
+  {$ENDIF}
+
   First := FindFirstFile( PChar( GetDir( filePath + Directory ) + '*' ), FList );
   repeat
     if FindDir Then
@@ -254,6 +399,26 @@ procedure file_SetPath( const Path : String );
 begin
   filePath := GetDir( Path );
 end;
+
+{$IFDEF USE_ZIP}
+function file_OpenArchive( const FileName : String; const Password : String = '' ) : Boolean;
+  var
+    error : Integer;
+begin
+  zipCurrent := zip_open( PAnsiChar( FileName ), 0, error );
+  Result     := zipCurrent <> nil;
+  if Password = '' Then
+    zip_set_default_password( zipCurrent, nil )
+  else
+    zip_set_default_password( zipCurrent, PAnsiChar( Password ) );
+end;
+
+procedure file_CloseArchive;
+begin
+  zip_close( zipCurrent );
+  zipCurrent := nil;
+end;
+{$ENDIF}
 
 function _file_GetName( const FileName : String ) : PChar;
 begin

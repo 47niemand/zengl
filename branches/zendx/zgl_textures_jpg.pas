@@ -37,7 +37,7 @@ interface
 
 uses
   Windows,
-  zgl_msvcrt,
+  zgl_lib_msvcrt,
   zgl_types,
   zgl_memory;
 
@@ -46,6 +46,7 @@ const
   JPEG_EXTENSION : array[ 0..4 ] of Char = ( 'J', 'P', 'E', 'G', #0 );
 
 {$IFDEF USE_LIBJPEG}
+  {$L jpeg_helper}
   {$L jaricom}
   {$L jcomapi}
   {$L jdapimin}
@@ -72,7 +73,6 @@ const
   {$L jquant1}
   {$L jquant2}
   {$L jutils}
-  {$L wrapper}
 {$ENDIF}
 
 procedure jpg_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );

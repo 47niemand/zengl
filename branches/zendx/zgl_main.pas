@@ -29,7 +29,7 @@ uses
 
 const
   cs_ZenGL    = 'ZenGL 0.3';
-  cs_Date     = '2011.10.27';
+  cs_Date     = '2011.11.27';
   cv_major    = 0;
   cv_minor    = 3;
   cv_revision = 0;
@@ -127,7 +127,7 @@ const
   CLIP_INVISIBLE        = $008000;
 
 procedure zgl_Init( FSAA : Byte = 0; StencilBits : Byte = 0 );
-procedure zgl_InitToHandle( Handle : LongWord; FSAA : Byte = 0; StencilBits : Byte = 0 );
+procedure zgl_InitToHandle( Handle : Ptr; FSAA : Byte = 0; StencilBits : Byte = 0 );
 procedure zgl_Destroy;
 procedure zgl_Exit;
 procedure zgl_Reg( What : LongWord; UserData : Pointer );
@@ -196,7 +196,7 @@ begin
   zgl_Destroy();
 end;
 
-procedure zgl_InitToHandle( Handle : LongWord; FSAA : Byte = 0; StencilBits : Byte = 0 );
+procedure zgl_InitToHandle( Handle : Ptr; FSAA : Byte = 0; StencilBits : Byte = 0 );
 begin
   zgl_GetSysDir();
   log_Init();
