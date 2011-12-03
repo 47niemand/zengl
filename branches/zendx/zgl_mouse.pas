@@ -43,7 +43,7 @@ function mouse_Click( Button : Byte ) : Boolean;
 function mouse_DblClick( Button : Byte ) : Boolean;
 function mouse_Wheel( Axis : Byte ) : Boolean;
 procedure mouse_ClearState;
-procedure mouse_Lock;
+procedure mouse_Lock( X : Integer = -1; Y : Integer = -1 );
 
 var
   mouseX        : Integer;
@@ -133,10 +133,20 @@ end;
 
 procedure mouse_Lock;
 begin
-  if wndFullScreen Then
-    SetCursorPos( wndWidth div 2, wndHeight div 2 )
-  else
-    SetCursorPos( wndX + wndBrdSizeX + wndWidth div 2, wndY + wndBrdSizeY + wndCpnSize + wndHeight div 2 );
+  if ( X = -1 ) and ( Y = -1 ) Then
+    begin
+      if wndFullScreen Then
+        begin
+          X := wndWidth div 2;
+          Y := wndHeight div 2;
+        end else
+          begin
+            X := wndX + wndBrdSizeX + wndWidth div 2;
+            Y := wndY + wndBrdSizeY + wndCpnSize + wndHeight div 2;
+          end;
+    end;
+
+  SetCursorPos( X, Y );
 end;
 
 end.
