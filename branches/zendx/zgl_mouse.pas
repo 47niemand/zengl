@@ -144,7 +144,11 @@ begin
             X := wndX + wndBrdSizeX + wndWidth div 2;
             Y := wndY + wndBrdSizeY + wndCpnSize + wndHeight div 2;
           end;
-    end;
+    end else
+      begin
+        X := wndX + X;
+        Y := wndY + Y;
+      end;
 
   SetCursorPos( X, Y );
 end;
