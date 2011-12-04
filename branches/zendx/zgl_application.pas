@@ -160,6 +160,10 @@ begin
             continue;
 
       t := timer_GetTicks();
+      // Workaround for bug with unstable time between frames...
+      if ( scrVSync ) and ( appFPS > 0 ) and ( appFPS = scrRefresh ) and ( appFlags and APP_USE_DT_CORRECTION > 0 ) Then
+        app_PUpdate( 1000 / appFPS )
+      else
       app_PUpdate( timer_GetTicks() - appdt );
       appdt := t;
 
@@ -495,6 +499,6 @@ initialization
   app_PActivate   := app_ZeroActivate;
   app_PCloseQuery := app_ZeroCloseQuery;
 
-  appFlags := WND_USE_AUTOCENTER or APP_USE_LOG or COLOR_BUFFER_CLEAR or CLIP_INVISIBLE;
+  appFlags := WND_USE_AUTOCENTER or APP_USE_LOG or COLOR_BUFFER_CLEAR or CLIP_INVISIBLE or APP_USE_DT_CORRECTION;
 
 end.

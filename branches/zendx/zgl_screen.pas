@@ -205,6 +205,7 @@ begin
   oglTargetH    := Height;
   wndWidth      := Width;
   wndHeight     := Height;
+  scrRefresh    := Refresh;
   wndFullScreen := FullScreen;
   scrVsync      := VSync;
 
@@ -216,9 +217,8 @@ begin
       scrHeight := Height;
     end else
       begin
-        scrWidth   := zgl_Get( DESKTOP_WIDTH );
-        scrHeight  := zgl_Get( DESKTOP_HEIGHT );
-        scrRefresh := GetDisplayRefresh();
+        scrWidth  := zgl_Get( DESKTOP_WIDTH );
+        scrHeight := zgl_Get( DESKTOP_HEIGHT );
       end;
 
   if not appInitialized Then exit;
@@ -232,7 +232,10 @@ begin
   else
     log_Add( 'Screen options changed to: ' + u_IntToStr( wndWidth ) + ' x ' + u_IntToStr( wndHeight ) + ' windowed' );
   if appWork Then
-    wnd_Update();
+    begin
+      wnd_Update();
+      scrRefresh := GetDisplayRefresh();
+    end;
 end;
 
 procedure scr_CorrectResolution( Width, Height : Word );
