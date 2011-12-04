@@ -10,7 +10,6 @@ uses
   zgl_screen,
   zgl_window,
   zgl_timers,
-  zgl_direct3d,
   zgl_keyboard,
   zgl_render_2d,
   zgl_fx,
@@ -18,7 +17,6 @@ uses
   zgl_textures_png,
   zgl_render_target,
   zgl_sprite_2d,
-  zgl_primitives_2d,
   zgl_font,
   zgl_text,
   zgl_math_2d,
@@ -60,14 +58,9 @@ begin
   rtarget_Set( rtarget );
   // RU: Рисуем в него
   // EN: Render to it.
-  pr2d_Rect( 0, 0, 800, 600, $FF0000, 255, PR2D_FILL );
-  scissor_Begin( 100, 100, 200, 200 );
-  //asprite2d_Draw( texTux, random( 800 - 64 ), random( 600 - 64 ), 64, 64, 0, random( 9 ) + 1 );
-  pr2d_Rect( 100, 100, 64, 64, $000000, 255, PR2D_FILL );
-  asprite2d_Draw( texTux, 100, 100, 64, 64, 0, random( 9 ) + 1 );
+  asprite2d_Draw( texTux, random( 800 - 64 ), random( 600 - 64 ), 64, 64, 0, random( 9 ) + 1 );
   // RU: Возвращаемся к обычному рендеру.
   // EN: Return to default rendering.
-  scissor_End;
   rtarget_Set( nil );
 
   // RU: Теперь рисуем содержимое RenderTarget'а.
