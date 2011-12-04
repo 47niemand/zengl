@@ -586,17 +586,24 @@ begin
         glDisable( GL_DEPTH_TEST );
         glMatrixMode( GL_PROJECTION );
         glLoadIdentity;
-        glOrtho( ScissorX, ScissorX + ScissorW, ScissorY + ScissorH, ScissorY, -1, 1 );
+        if oglTarget = TARGET_SCREEN Then
+          glOrtho( ScissorX, ScissorX + ScissorW, ScissorY + ScissorH, ScissorY, -1, 1 )
+        else
+          glOrtho( ScissorX, ScissorX + ScissorW, ScissorY, ScissorY + ScissorH, -1, 1 );
         glMatrixMode( GL_MODELVIEW );
         glLoadIdentity;
-        if appFlags and CORRECT_RESOLUTION > 0 Then
+        if ( oglTarget = TARGET_SCREEN ) and ( appFlags and CORRECT_RESOLUTION > 0 ) Then
           begin
             glTranslatef( scrAddCX, scrAddCY, 0 );
             glScalef( scrResCX, scrResCY, 1 );
           end;
 
         ScissorEnabled := FALSE;
-        glViewPort( ScissorX, ScissorY, ScissorW, ScissorH );
+        if oglTarget = TARGET_SCREEN Then
+          glViewPort( ScissorX, ScissorY, ScissorW, ScissorH )
+        else
+          glViewPort( Round( ScissorX / ( oglWidth / oglTargetW ) ), oglTargetH - Round( ( ScissorY + ScissorH ) / ( oglHeight / oglTargetH ) ),
+                      Round( ScissorW / ( oglWidth / oglTargetW ) ), Round( ScissorH / ( oglHeight / oglTargetH ) ) );
         ScissorEnabled := TRUE;
       end;
 end;
@@ -642,26 +649,35 @@ end;
 
 procedure glScissor(x, y: GLint; width, height: GLsizei);
 begin
-  ScissorX := x;
-  ScissorY := -( y + height - wndHeight );
-  if ScissorX < scrAddCX Then
+  if oglTarget = TARGET_SCREEN Then
     begin
-      ScissorW := ScissorX + width - scrAddCX;
-      ScissorX := scrAddCX;
-    end else ScissorW := width;
-  if ScissorY < scrAddCY Then
-    begin
-      ScissorH := ScissorY + height - scrAddCY;
-      ScissorY := scrAddCY;
-    end else ScissorH := height;
+      ScissorX := x;
+      ScissorY := -( y + height - wndHeight );
+      if ScissorX < scrAddCX Then
+        begin
+          ScissorW := ScissorX + width - scrAddCX;
+          ScissorX := scrAddCX;
+        end else ScissorW := width;
+      if ScissorY < scrAddCY Then
+        begin
+          ScissorH := ScissorY + height - scrAddCY;
+          ScissorY := scrAddCY;
+        end else ScissorH := height;
 
-  if ScissorX + ScissorW > wndWidth - scrAddCX Then
-    ScissorW := wndWidth - ScissorX - scrAddCX;
-  if ScissorY + ScissorH > wndHeight - scrAddCY Then
-    ScissorH := wndHeight - ScissorY - scrAddCY;
+      if ScissorX + ScissorW > wndWidth - scrAddCX Then
+        ScissorW := wndWidth - ScissorX - scrAddCX;
+      if ScissorY + ScissorH > wndHeight - scrAddCY Then
+        ScissorH := wndHeight - ScissorY - scrAddCY;
 
-  if ScissorX >= ScissorX + ScissorW Then exit;
-  if ScissorY >= ScissorY + ScissorH Then exit;
+      if ScissorX >= ScissorX + ScissorW Then exit;
+      if ScissorY >= ScissorY + ScissorH Then exit;
+    end else
+      begin
+        ScissorX := x;
+        ScissorY := -( y + height - wndHeight );
+        ScissorW := width;
+        ScissorH := height;
+      end;
 
   glViewPort( 0, 0, 0, 0 );
 end;
