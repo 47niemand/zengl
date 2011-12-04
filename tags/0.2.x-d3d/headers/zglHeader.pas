@@ -2,8 +2,8 @@
 {-----------= ZenGL =-----------}
 {-------------------------------}
 {                               }
-{ version:  0.2.3               }
-{ date:     2011.10.23          }
+{ version:  0.2.4               }
+{ date:     2011.12.04          }
 { license:  GNU LGPL version 3  }
 { homepage: http://zengl.org    }
 {                               }
@@ -174,6 +174,7 @@ const
   APP_USE_LOG           = $000200;
   APP_USE_ENGLISH_INPUT = $000400;
   APP_USE_UTF8          = $000800;
+  APP_USE_DT_CORRECTION = $010000;
   WND_USE_AUTOCENTER    = $001000;
   SND_CAN_PLAY          = $002000;
   SND_CAN_PLAY_FILE     = $004000;

@@ -121,6 +121,7 @@ const
   SND_CAN_PLAY          = $002000;
   SND_CAN_PLAY_FILE     = $004000;
   CLIP_INVISIBLE        = $008000;
+  APP_USE_DT_CORRECTION = $010000;
 
 procedure zgl_Init( FSAA : Byte = 0; StencilBits : Byte = 0 );
 procedure zgl_InitToHandle( Handle : Ptr; FSAA : Byte = 0; StencilBits : Byte = 0 );

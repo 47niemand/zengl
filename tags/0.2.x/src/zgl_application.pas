@@ -170,6 +170,12 @@ begin
           timer_MainLoop();
 
       t := timer_GetTicks();
+      {$IFDEF WINDESKTOP}
+      // I hate Windows, I hate AMD... why AMD can develop such a shit sometimes? >_<
+      if ( scrVSync ) and ( appFPS = scrRefresh ) and ( appFlags and APP_USE_DT_CORRECTION > 0 ) Then
+        app_PUpdate( 1000 / appFPS )
+      else
+      {$ENDIF}
       app_PUpdate( timer_GetTicks() - appdt );
       appdt := t;
 
@@ -925,6 +931,6 @@ begin
 end;
 
 initialization
-  appFlags := WND_USE_AUTOCENTER or APP_USE_LOG or COLOR_BUFFER_CLEAR or CLIP_INVISIBLE;
+  appFlags := WND_USE_AUTOCENTER or APP_USE_LOG or COLOR_BUFFER_CLEAR or CLIP_INVISIBLE {$IFDEF WINDESKTOP} or APP_USE_DT_CORRECTION {$ENDIF};
 
 end.
