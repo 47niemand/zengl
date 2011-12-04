@@ -29,7 +29,13 @@ uses
 {$IFDEF FPC}
   {$LINKLIB libmsvcrt.a}
 
-  function pow( x : cdouble ) : cdouble; cdecl; external 'msvcrt.dll';
+  {$IFDEF WIN64}
+  {$IFDEF NAME_MANGLING}
+  function msvcrt_pow( x, y : Double ) : Double; cdecl; public name 'pow';
+  {$ENDIF}
+  {$ENDIF}
+
+  function pow( x, y : Double ) : Double; cdecl; external 'msvcrt.dll';
 {$ELSE}
   function memcpy( dest : Pointer; src : Pointer; count : csize_t ) : Pointer; cdecl; external 'msvcrt.dll';
   function memset( dest : Pointer; c : Integer; count : csize_t ) : Pointer; cdecl; external 'msvcrt.dll';
@@ -38,5 +44,16 @@ uses
 {$ENDIF}
 
 implementation
+
+{$IFDEF FPC}
+{$IFDEF WIN64}
+{$IFDEF NAME_MANGLING}
+function msvcrt_pow( x, y : Double ) : Double;
+begin
+  Result := pow( x, y );
+end;
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
 
 end.
