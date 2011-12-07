@@ -77,13 +77,12 @@ function _file_GetDirectory( const FileName : String ) : PChar;
 implementation
 uses
   zgl_main,
+  zgl_resources,
+  zgl_log,
   zgl_utils;
 
 var
   filePath : String = '';
-  {$IFDEF USE_ZIP}
-  zipCurrent : Pzip;
-  {$ENDIF}
 
 function GetDir( const Path : String ) : String;
   var
@@ -406,9 +405,26 @@ end;
 function file_OpenArchive( const FileName : String; const Password : String = '' ) : Boolean;
   var
     error : Integer;
+    res   : zglTZIPResource;
 begin
+  if resUseThreaded Then
+    begin
+      Result       := TRUE;
+      res.FileName := FileName;
+      res.Password := Password;
+      res_AddToQueue( RES_ZIP_OPEN, TRUE, @res );
+      exit;
+    end;
+
   zipCurrent := zip_open( PAnsiChar( FileName ), 0, error );
   Result     := zipCurrent <> nil;
+
+  if not Result Then
+    begin
+      log_Add( 'Unable to open archive: ' + FileName );
+      exit;
+    end;
+
   if Password = '' Then
     zip_set_default_password( zipCurrent, nil )
   else
@@ -416,7 +432,17 @@ begin
 end;
 
 procedure file_CloseArchive;
+  var
+    res : zglTZIPResource;
 begin
+  if resUseThreaded Then
+    begin
+      res.FileName := '';
+      res.Password := '';
+      res_AddToQueue( RES_ZIP_CLOSE, TRUE, @res );
+      exit;
+    end;
+
   zip_close( zipCurrent );
   zipCurrent := nil;
 end;
