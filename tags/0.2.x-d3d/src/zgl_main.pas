@@ -28,8 +28,8 @@ uses
   zgl_types;
 
 const
-  cs_ZenGL    = 'ZenGL 0.2.4';
-  cs_Date     = '2011.12.04';
+  cs_ZenGL    = 'ZenGL 0.2.5';
+  cs_Date     = '2011.12.08';
   cv_major    = 0;
   cv_minor    = 2;
   cv_revision = 4;
