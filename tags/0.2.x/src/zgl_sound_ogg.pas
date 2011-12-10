@@ -55,6 +55,9 @@ unit zgl_sound_ogg;
   {$L synthesis}
   {$L vorbisfile}
   {$L window}
+  {$IFDEF UNIX}
+    {$LINKLIB m}
+  {$ENDIF}
   {$IFDEF DARWIN}
     {$LINKLIB libgcc.a}
   {$ENDIF}
