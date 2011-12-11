@@ -58,7 +58,7 @@ type
 type
   zglPRenderTarget = ^zglTRenderTarget;
   zglTRenderTarget = record
-    _type   : Byte;
+    Type_      : Byte;
     Handle  : zglPD3DTarget;
     Surface : zglPTexture;
     Flags   : Byte;
@@ -76,7 +76,7 @@ type
 type
   zglTRenderCallback = procedure( Data : Pointer );
 
-function rtarget_Add( Surface : zglPTexture; Flags : Byte ) : zglPRenderTarget;
+function  rtarget_Add( Surface : zglPTexture; Flags : Byte ) : zglPRenderTarget;
 procedure rtarget_Del( var Target : zglPRenderTarget );
 procedure rtarget_Set( Target : zglPRenderTarget );
 procedure rtarget_DrawIn( Target : zglPRenderTarget; RenderCallback : zglTRenderCallback; Data : Pointer );
@@ -213,7 +213,7 @@ begin
   d3dTexArray[ Surface.ID ].Pool := D3DPOOL_DEFAULT;
   rtarget_Restore( Surface );
 
-  Result.next._type      := 0;
+  Result.next.Type_      := 0;
   Result.next.Handle.Old := Surface;
   Result.next.Surface    := Surface;
   Result.next.Flags      := Flags;
