@@ -10,6 +10,7 @@
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
+      <Title Value="ZenGL"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
@@ -17,7 +18,7 @@
       <UseVersionInfo Value="True"/>
       <MinorVersionNr Value="3"/>
       <CharSet Value="04B0"/>
-      <StringTable CompanyName="Kemka Andrey aka Andru" FileDescription="Cross-platform game development library" InternalName="ZenGL" LegalCopyright="Kemka Andrey aka Andru" OriginalFilename="ZenGL" ProductName="ZenGL" ProductVersion="0.3"/>
+      <StringTable CompanyName="Kemka Andrey aka Andru" ProductName="ZenGL" InternalName="ZenGL" LegalCopyright="Kemka Andrey aka Andru" ProductVersion="0.3" FileDescription="Cross-platform game development library" OriginalFilename="ZenGL"/>
     </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="default" Default="True"/>
@@ -34,9 +35,9 @@
         <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <Units Count="43">
+    <Units Count="49">
       <Unit0>
-        <Filename Value="../ZenGL.pas"/>
+        <Filename Value="ZenGL.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ZenGL"/>
       </Unit0>
@@ -250,12 +251,42 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="zgl_texture_atlas"/>
       </Unit42>
+      <Unit43>
+        <Filename Value="../zgl_export_c.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_export_c"/>
+      </Unit43>
+      <Unit44>
+        <Filename Value="../zgl_lib_msvcrt.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_lib_msvcrt"/>
+      </Unit44>
+      <Unit45>
+        <Filename Value="../zgl_lib_zip.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_lib_zip"/>
+      </Unit45>
+      <Unit46>
+        <Filename Value="../zgl_particles_2d.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_particles_2d"/>
+      </Unit46>
+      <Unit47>
+        <Filename Value="../zgl_sengine_2d.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_sengine_2d"/>
+      </Unit47>
+      <Unit48>
+        <Filename Value="../zgl_resources.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_resources"/>
+      </Unit48>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
-    <Version Value="10"/>
+    <Version Value="11"/>
     <Target>
-      <Filename Value="./ZenGL.dll"/>
+      <Filename Value="./ZenGL"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
@@ -280,6 +311,7 @@
     </CodeGeneration>
     <Linking>
       <Debugging>
+        <GenerateDebugInfo Value="False"/>
         <UseLineInfoUnit Value="False"/>
         <StripSymbols Value="True"/>
       </Debugging>

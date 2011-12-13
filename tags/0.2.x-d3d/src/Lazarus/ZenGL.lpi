@@ -18,7 +18,7 @@
       <MinorVersionNr Value="2"/>
       <RevisionNr Value="3"/>
       <CharSet Value="04B0"/>
-      <StringTable CompanyName="Kemka Andrey aka Andru" FileDescription="Cross-platform game development library" InternalName="ZenGL" LegalCopyright="Kemka Andrey aka Andru" OriginalFilename="ZenGL" ProductName="ZenGL" ProductVersion="0.2.3"/>
+      <StringTable CompanyName="Kemka Andrey aka Andru" ProductName="ZenGL" InternalName="ZenGL" LegalCopyright="Kemka Andrey aka Andru" ProductVersion="0.2.3" FileDescription="Cross-platform game development library" OriginalFilename="ZenGL"/>
     </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="default" Default="True"/>
@@ -254,7 +254,7 @@
     </Units>
   </ProjectOptions>
   <CompilerOptions>
-    <Version Value="10"/>
+    <Version Value="11"/>
     <Target>
       <Filename Value="./ZenGL.dll"/>
     </Target>
@@ -281,6 +281,7 @@
     </CodeGeneration>
     <Linking>
       <Debugging>
+        <GenerateDebugInfo Value="False"/>
         <UseLineInfoUnit Value="False"/>
         <StripSymbols Value="True"/>
       </Debugging>
