@@ -83,8 +83,7 @@ uses
 
   zgl_collision_2d,
 
-  zgl_utils, zgl_export_c, zgl_lib_msvcrt, zgl_lib_zip, zgl_particles_2d,
-  zgl_sengine_2d, zgl_resources
+  zgl_utils
 
   {$IFDEF USE_EXPORT_C}
   , zgl_export_c
