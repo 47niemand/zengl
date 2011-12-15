@@ -37,7 +37,7 @@
     </RunParams>
     <Units Count="49">
       <Unit0>
-        <Filename Value="ZenGL.pas"/>
+        <Filename Value="../ZenGL.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ZenGL"/>
       </Unit0>
