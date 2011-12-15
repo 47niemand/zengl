@@ -155,7 +155,7 @@ function  snd_PlayMemory( const Memory : zglTMemory; const Extension : String; L
 procedure snd_PauseFile( ID : Integer );
 procedure snd_StopFile( ID : Integer );
 procedure snd_ResumeFile( ID : Integer );
-function  snd_ProcFile( data : Pointer ) : LongInt;
+function  snd_ProcFile( data : Pointer ) : LongInt; register;
 
 var
   managerSound : zglTSoundManager;
