@@ -1087,9 +1087,9 @@ begin
   sfStream[ ID ]._complete := 0;
   sfStream[ ID ]._lastTime := timer_GetTicks;
 {$IFDEF FPC}
-  sfThread[ ID ] := LongWord( BeginThread( @snd_ProcFile, Pointer( ID ) ) );
+  sfThread[ ID ] := LongWord( BeginThread( @snd_ProcFile, @ID ) );
 {$ELSE}
-  sfThread[ ID ] := BeginThread( nil, 0, @snd_ProcFile, Pointer( ID ), 0, sfThreadID[ ID ] );
+  sfThread[ ID ] := BeginThread( nil, 0, @snd_ProcFile, @ID, 0, sfThreadID[ ID ] );
 {$ENDIF}
 end;
 
@@ -1230,7 +1230,7 @@ function snd_ProcFile( data : Pointer ) : LongInt;
   {$ENDIF}
 begin
   Result := 0;
-  id := LongWord( data );
+  id := LongWord( data^ );
 
 {$IFDEF USE_OPENAL}
   processed := 0;
