@@ -100,6 +100,8 @@ type
     _complete  : Double;
     _lastTime  : Double;
 
+    ID         : Integer;
+
     Buffer     : Pointer;
     BufferSize : LongWord;
 
@@ -157,7 +159,7 @@ function  snd_PlayMemory( const Memory : zglTMemory; const Extension : String; L
 procedure snd_PauseFile( ID : Integer );
 procedure snd_StopFile( ID : Integer );
 procedure snd_ResumeFile( ID : Integer );
-function  snd_ProcFile( data : Pointer ) : LongInt; register;
+function  snd_ProcFile( data : Pointer ) : LongInt;
 
 var
   managerSound : zglTSoundManager;
@@ -1120,15 +1122,16 @@ begin
   sfSource[ ID ].SetFrequency( sfStream[ ID ].Frequency );
 {$ENDIF}
 
+  sfStream[ ID ].ID        := ID;
   sfStream[ ID ]._playing  := TRUE;
   sfStream[ ID ]._paused   := FALSE;
   sfStream[ ID ]._waiting  := FALSE;
   sfStream[ ID ]._complete := 0;
   sfStream[ ID ]._lastTime := timer_GetTicks;
 {$IFDEF FPC}
-  sfThread[ ID ] := LongWord( BeginThread( @snd_ProcFile, @ID ) );
+  sfThread[ ID ] := LongWord( BeginThread( @snd_ProcFile, @sfStream[ ID ].ID ) );
 {$ELSE}
-  sfThread[ ID ] := BeginThread( nil, 0, @snd_ProcFile, @ID, 0, sfThreadID[ ID ] );
+  sfThread[ ID ] := BeginThread( nil, 0, @snd_ProcFile, @sfStream[ ID ].ID, 0, sfThreadID[ ID ] );
 {$ENDIF}
 end;
 
@@ -1269,7 +1272,7 @@ function snd_ProcFile( data : Pointer ) : LongInt;
   {$ENDIF}
 begin
   Result := 0;
-  id := LongWord( data^ );
+  id := PInteger( data )^;
 
 {$IFDEF USE_OPENAL}
   processed := 0;
