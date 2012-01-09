@@ -22,10 +22,6 @@ unit zgl_sound_ogg;
 
 {$I zgl_config.cfg}
 
-{$IFNDEF FPC}
-  {$UNDEF USE_OGG_STATIC}
-{$ENDIF}
-
 {$IFDEF USE_OGG_STATIC}
   {$L bitwise}
   {$L framing}
@@ -413,6 +409,7 @@ function ogg_DecoderRead( var Stream : zglTSoundStream; Buffer : Pointer; Bytes 
   var
     bytesRead : Integer;
 begin
+  Result := 0;
   if not oggInit Then exit;
 
   bytesRead := 0;
@@ -506,17 +503,19 @@ begin
     end;
 end;
 
+{$IFDEF USE_OGG}
 initialization
-  oggDecoder.Ext      := OGG_EXTENSION;
-  oggDecoder.Open     := ogg_DecoderOpen;
-  oggDecoder.OpenMem  := ogg_DecoderOpenMem;
-  oggDecoder.Read     := ogg_DecoderRead;
-  oggDecoder.Loop     := ogg_DecoderLoop;
-  oggDecoder.Close    := ogg_DecoderClose;
+  oggDecoder.Ext     := OGG_EXTENSION;
+  oggDecoder.Open    := ogg_DecoderOpen;
+  oggDecoder.OpenMem := ogg_DecoderOpenMem;
+  oggDecoder.Read    := ogg_DecoderRead;
+  oggDecoder.Loop    := ogg_DecoderLoop;
+  oggDecoder.Close   := ogg_DecoderClose;
   zgl_Reg( SND_FORMAT_EXTENSION,   @OGG_EXTENSION[ 0 ] );
   zgl_Reg( SND_FORMAT_FILE_LOADER, @ogg_LoadFromFile );
   zgl_Reg( SND_FORMAT_MEM_LOADER,  @ogg_LoadFromMemory );
   zgl_Reg( SND_FORMAT_DECODER,     @oggDecoder );
+{$ENDIF}
 
 finalization
 {$IFNDEF USE_OGG_STATIC}
