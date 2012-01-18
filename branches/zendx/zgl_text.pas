@@ -246,8 +246,8 @@ end;
 
 procedure text_DrawInRect( Font : zglPFont; const Rect : zglTRect; const Text : String; Flags : LongWord = 0 );
   var
-    i, j, b    : Integer;
-    NewFlags   : Integer;
+    i, j, b  : Integer;
+    NewFlags : Integer;
 begin
   if ( Text = '' ) or ( not Assigned( Font ) ) Then exit;
 
