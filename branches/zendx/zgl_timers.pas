@@ -82,9 +82,9 @@ begin
   Result.next.UserData  := UserData;
   Result.next.Interval  := Interval;
   if UseSenderForCallback Then
-    Result.next.OnTimer := OnTimer
+    Result.next.OnTimerEx := OnTimer
   else
-    Result.next.OnTimerEx := OnTimer;
+    Result.next.OnTimer := OnTimer;
   Result.next.LastTick  := timer_GetTicks();
   Result.next.prev      := Result;
   Result.next.next      := nil;
@@ -133,7 +133,7 @@ begin
               begin
                 timer.LastTick := timer.LastTick + timer.Interval;
                 if timer.Custom Then
-                  timer.OnTimerEx( timer );
+                  timer.OnTimerEx( timer )
                 else
                   timer.OnTimer();
                 if t < timer_GetTicks() - timer.Interval Then
