@@ -26,6 +26,7 @@ interface
 
 uses
   Windows,
+  zgl_types,
   {$IFDEF USE_OPENAL}
   zgl_sound_openal,
   {$ELSE}
@@ -65,7 +66,7 @@ type
 
   zglTSoundChannel = record
     {$IFDEF USE_OPENAL}
-    Source     : LongWord;
+    Source     : Ptr;
     {$ELSE}
     Source     : IDirectSoundBuffer;
     {$ENDIF}
@@ -196,7 +197,6 @@ var
 
 implementation
 uses
-  zgl_types,
   zgl_application,
   zgl_main,
   zgl_window,

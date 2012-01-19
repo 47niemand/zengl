@@ -32,6 +32,7 @@ uses
   {$IFDEF WINDOWS}
   Windows,
   {$ENDIF}
+  zgl_types,
   {$IFDEF USE_OPENAL}
   zgl_sound_openal,
   {$ELSE}
@@ -66,7 +67,7 @@ type
 
   zglTSoundChannel = record
     {$IFDEF USE_OPENAL}
-    Source     : LongWord;
+    Source     : Ptr;
     {$ELSE}
     Source     : IDirectSoundBuffer;
     {$ENDIF}
