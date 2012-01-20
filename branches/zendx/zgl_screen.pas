@@ -56,13 +56,19 @@ type
 end;
 
 var
-  scrWidth   : Integer = 800;
-  scrHeight  : Integer = 600;
-  scrRefresh : Integer;
-  scrVSync   : Boolean;
-  scrResList : zglTResolutionList;
+  scrWidth       : Integer = 800;
+  scrHeight      : Integer = 600;
+  scrRefresh     : Integer;
+  scrVSync       : Boolean;
+  scrResList     : zglTResolutionList;
   scrInitialized : Boolean;
-  scrChanging : Boolean;
+  scrChanging    : Boolean;
+
+  // Viewport
+  scrViewportX : Integer;
+  scrViewportY : Integer;
+  scrViewportW : Integer;
+  scrViewportH : Integer;
 
   // Resolution Correct
   scrResW  : Integer;
@@ -199,10 +205,6 @@ end;
 procedure scr_SetOptions( Width, Height, Refresh : Word; FullScreen, VSync : Boolean );
 begin
   scrChanging   := TRUE;
-  oglWidth      := Width;
-  oglHeight     := Height;
-  oglTargetW    := Width;
-  oglTargetH    := Height;
   wndWidth      := Width;
   wndHeight     := Height;
   scrRefresh    := Refresh;
@@ -221,7 +223,14 @@ begin
         scrHeight := zgl_Get( DESKTOP_HEIGHT );
       end;
 
-  if not appInitialized Then exit;
+  if not appInitialized Then
+    begin
+      oglWidth   := Width;
+      oglHeight  := Height;
+      oglTargetW := Width;
+      oglTargetH := Height;
+      exit;
+    end;
   scr_SetVSync( scrVSync );
 
   if Assigned( d3dDevice ) Then
@@ -240,10 +249,14 @@ end;
 
 procedure scr_CorrectResolution( Width, Height : Word );
 begin
-  scrResW  := Width;
-  scrResH  := Height;
-  scrResCX := wndWidth  / Width;
-  scrResCY := wndHeight / Height;
+  scrResW        := Width;
+  scrResH        := Height;
+  scrResCX       := wndWidth  / Width;
+  scrResCY       := wndHeight / Height;
+  render2dClipW  := Width;
+  render2dClipH  := Height;
+  render2dClipXW := render2dClipX + render2dClipW;
+  render2dClipYH := render2dClipY + render2dClipH;
 
   if scrResCX < scrResCY Then
     begin
@@ -281,27 +294,40 @@ begin
     begin
       if ( appFlags and CORRECT_RESOLUTION > 0 ) and ( oglMode = 2 ) Then
         begin
-          oglClipX := 0;
-          oglClipY := 0;
-          oglClipW := wndWidth - scrAddCX * 2;
-          oglClipH := wndHeight - scrAddCY * 2;
-          glViewPort( scrAddCX, scrAddCY, oglClipW, oglClipH );
+          scrViewportX := scrAddCX;
+          scrViewportY := scrAddCY;
+          scrViewportW := wndWidth- scrAddCX * 2;
+          scrViewportH := wndHeight - scrAddCY * 2;
         end else
           begin
-            oglClipX := 0;
-            oglClipY := 0;
-            oglClipW := wndWidth;
-            oglClipH := wndHeight;
-            glViewPort( 0, 0, oglClipW, oglClipH );
+            scrViewportX := 0;
+            scrViewportY := 0;
+            scrViewportW := wndWidth;
+            scrViewportH := wndHeight;
           end;
     end else
       begin
-        oglClipX := 0;
-        oglClipY := 0;
-        oglClipW := oglWidth;
-        oglClipH := oglHeight;
-        glViewPort( 0, 0, oglTargetW, oglTargetH );
+        scrViewportX := 0;
+        scrViewportY := 0;
+        scrViewportW := oglTargetW;
+        scrViewportH := oglTargetH;
       end;
+
+  if appFlags and CORRECT_RESOLUTION > 0 Then
+    begin
+      render2dClipW  := scrResW;
+      render2dClipH  := scrResH;
+      render2dClipXW := render2dClipX + render2dClipW;
+      render2dClipYH := render2dClipY + render2dClipH;
+    end else
+      begin
+        render2dClipW  := scrViewportW;
+        render2dClipH  := scrViewportH;
+        render2dClipXW := render2dClipX + render2dClipW;
+        render2dClipYH := render2dClipY + render2dClipH;
+      end;
+
+  glViewPort( scrViewportX, scrViewportY, scrViewportW, scrViewportH );
 end;
 
 procedure scr_SetVSync( VSync : Boolean );
@@ -329,7 +355,7 @@ procedure scr_ReadPixels( var pData : Pointer; X, Y, Width, Height : Word );
 begin
   batch2d_Flush();
   GetMem( pData, Width * Height * 4 );
-  glReadPixels( X, oglClipH - Height - Y, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, pData );
+  glReadPixels( X, oglHeight - Height - Y, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, pData );
 end;
 
 end.

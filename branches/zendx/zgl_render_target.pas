@@ -59,9 +59,9 @@ type
   zglPRenderTarget = ^zglTRenderTarget;
   zglTRenderTarget = record
     Type_      : Byte;
-    Handle  : zglPD3DTarget;
-    Surface : zglPTexture;
-    Flags   : Byte;
+    Handle     : zglPD3DTarget;
+    Surface    : zglPTexture;
+    Flags      : Byte;
 
     prev, next : zglPRenderTarget;
   end;
@@ -107,8 +107,6 @@ var
   {$ENDIF}
   lGLW     : Integer;
   lGLH     : Integer;
-  lClipW   : Integer;
-  lClipH   : Integer;
   lResCX   : Single;
   lResCY   : Single;
 
@@ -255,8 +253,6 @@ begin
       lRTarget   := Target;
       lGLW       := oglWidth;
       lGLH       := oglHeight;
-      lClipW     := oglClipW;
-      lClipH     := oglClipH;
       lResCX     := scrResCX;
       lResCY     := scrResCY;
 
@@ -351,8 +347,6 @@ begin
           oglTargetH := oglHeight;
           if lRTarget.Flags and RT_FULL_SCREEN = 0 Then
             begin
-              oglClipW := lClipW;
-              oglClipH := lClipH;
               scrResCX := lResCX;
               scrResCY := lResCY;
             end;

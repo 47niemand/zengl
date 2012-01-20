@@ -106,16 +106,10 @@ var
   oglTarget  : Integer = TARGET_SCREEN;
   oglTargetW : Integer;
   oglTargetH : Integer;
+  oglWidth   : Integer;
+  oglHeight  : Integer;
 
-  oglWidth  : Integer;
-  oglHeight : Integer;
-  oglClipX  : Integer;
-  oglClipY  : Integer;
-  oglClipW  : Integer;
-  oglClipH  : Integer;
-  oglClipR  : Integer;
-
-  oglVRAMUSed : LongWord;
+  oglVRAMUsed : LongWord;
 
   oglCanAnisotropy : Boolean;
   oglCanS3TC       : Boolean;
@@ -630,15 +624,17 @@ begin
 
   INC( tSCount );
   SetLength( tScissor, tSCount );
-  tScissor[ tSCount - 1 ][ 0 ] := oglClipX;
-  tScissor[ tSCount - 1 ][ 1 ] := oglClipY;
-  tScissor[ tSCount - 1 ][ 2 ] := oglClipW;
-  tScissor[ tSCount - 1 ][ 3 ] := oglClipH;
+  tScissor[ tSCount - 1 ][ 0 ] := render2dClipX;
+  tScissor[ tSCount - 1 ][ 1 ] := render2dClipY;
+  tScissor[ tSCount - 1 ][ 2 ] := render2dClipW;
+  tScissor[ tSCount - 1 ][ 3 ] := render2dClipH;
 
-  oglClipX := X;
-  oglClipY := Y;
-  oglClipW := Width;
-  oglClipH := Height;
+  render2dClipX  := X;
+  render2dClipY  := Y;
+  render2dClipW  := Width;
+  render2dClipH  := Height;
+  render2dClipXW := render2dClipX + render2dClipW;
+  render2dClipYH := render2dClipY + render2dClipH;
 end;
 
 procedure scissor_End;
@@ -647,16 +643,16 @@ begin
 
   if tSCount - 1 < 0 Then exit;
   DEC( tSCount );
-  oglClipX := tScissor[ tSCount ][ 0 ];
-  oglClipY := tScissor[ tSCount ][ 1 ];
-  oglClipW := tScissor[ tSCount ][ 2 ];
-  oglClipH := tScissor[ tSCount ][ 3 ];
+  render2dClipX := tScissor[ tSCount ][ 0 ];
+  render2dClipY := tScissor[ tSCount ][ 1 ];
+  render2dClipW := tScissor[ tSCount ][ 2 ];
+  render2dClipH := tScissor[ tSCount ][ 3 ];
   SetLength( tScissor, tSCount );
 
   if tSCount > 0 Then
     begin
       glEnable( GL_SCISSOR_TEST );
-      glScissor( oglClipX, wndHeight - oglClipY - oglClipH, oglClipW, oglClipH );
+      glScissor( render2dClipX, wndHeight - render2dClipY - render2dClipH, render2dClipW, render2dClipH );
     end else
       glDisable( GL_SCISSOR_TEST );
 end;
