@@ -64,7 +64,7 @@ type
 type
   zglPTextureResource = ^zglTTextureResource;
   zglTTextureResource = record
-    FileName         : String;
+    FileName         : UTF8String;
     Memory           : zglTMemory;
     Texture          : zglPTexture;
     FileLoader       : zglTTextureFileLoader;
@@ -96,7 +96,7 @@ type
 type
   zglPFontResource = ^zglTFontResource;
   zglTFontResource = record
-    FileName : String;
+    FileName : UTF8String;
     Memory   : zglTMemory;
     Font     : zglPFont;
     pData    : array of Pointer;
@@ -109,7 +109,7 @@ type
 type
   zglPSoundResource = ^zglTSoundResource;
   zglTSoundResource = record
-    FileName   : String;
+    FileName   : UTF8String;
     Memory     : zglTMemory;
     Sound      : zglPSound;
     FileLoader : zglTSoundFileLoader;
@@ -122,8 +122,8 @@ type
 type
   zglPZIPResource = ^zglTZIPResource;
   zglTZIPResource = record
-    FileName : String;
-    Password : String;
+    FileName : UTF8String;
+    Password : UTF8String;
   end;
 {$ENDIF}
 
@@ -453,9 +453,9 @@ function res_ProcQueue( data : Pointer ) : LongInt;
     i, j, mW, rW : Integer;
     // font
     mem  : zglTMemory;
-    dir  : String;
-    name : String;
-    tmp  : String;
+    dir  : UTF8String;
+    name : UTF8String;
+    tmp  : UTF8String;
 begin
   Result := 0;
   id     := PByte( data )^;
@@ -670,11 +670,7 @@ begin
               RES_ZIP_OPEN:
                 with item^, zglPZIPResource( Resource )^ do
                   begin
-                    {$IF DEFINED(MACOSX) or DEFINED(iOS) or DEFINED(WINCE)}
-                    zipCurrent := zip_open( PAnsiChar( platform_GetRes( filePath + FileName ) ), 0, i );
-                    {$ELSE}
                     zipCurrent := zip_open( PAnsiChar( FileName ), 0, i );
-                    {$IFEND}
 
                     if zipCurrent = nil Then
                       begin

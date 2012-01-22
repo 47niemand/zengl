@@ -155,26 +155,26 @@ function  key_Down( KeyCode : Byte ) : Boolean;
 function  key_Up( KeyCode : Byte ) : Boolean;
 function  key_Press( KeyCode : Byte ) : Boolean;
 function  key_Last( KeyAction : Byte ) : Byte;
-procedure key_BeginReadText( const Text : String; MaxSymbols : Integer = -1 );
-procedure key_UpdateReadText( const Text : String; MaxSymbols : Integer = -1 );
-function  key_GetText : String;
+procedure key_BeginReadText( const Text : UTF8String; MaxSymbols : Integer = -1 );
+procedure key_UpdateReadText( const Text : UTF8String; MaxSymbols : Integer = -1 );
+function  key_GetText : UTF8String;
 procedure key_EndReadText;
 procedure key_ClearState;
 
-procedure key_InputText( const Text : String );
+procedure key_InputText( const Text : UTF8String );
 function  scancode_to_utf8( ScanCode : Byte ) : Byte;
 function  winkey_to_scancode( WinKey : Integer ) : Byte;
 function  SCA( KeyCode : DWORD ) : DWORD;
 procedure DoKeyPress( KeyCode : DWORD );
 
-function _key_GetText : PChar;
+function _key_GetText : PAnsiChar;
 
 var
   keysDown     : array[ 0..255 ] of Boolean;
   keysUp       : array[ 0..255 ] of Boolean;
   keysPress    : array[ 0..255 ] of Boolean;
   keysCanPress : array[ 0..255 ] of Boolean;
-  keysText     : String = '';
+  keysText     : UTF8String = '';
   keysCanText  : Boolean;
   keysMax      : Integer;
   keysLast     : array[ 0..1 ] of Byte;
@@ -182,7 +182,7 @@ var
   // callback
   key_PPress     : procedure( KeyCode : Byte );
   key_PRelease   : procedure( KeyCode : Byte );
-  key_PInputChar : procedure( Symbol : String );
+  key_PInputChar : procedure( Symbol : UTF8String );
 
 implementation
 uses
@@ -210,23 +210,23 @@ begin
   Result := keysLast[ KeyAction ];
 end;
 
-procedure key_BeginReadText( const Text : String; MaxSymbols : Integer = -1 );
+procedure key_BeginReadText( const Text : UTF8String; MaxSymbols : Integer = -1 );
 begin
-  keysText    := u_CopyStr( Text );
+  keysText    := u_CopyUTF8Str( Text );
   keysMax     := MaxSymbols;
   keysCanText := TRUE;
 end;
 
-procedure key_UpdateReadText( const Text : String; MaxSymbols : Integer = -1 );
+procedure key_UpdateReadText( const Text : UTF8String; MaxSymbols : Integer = -1 );
 begin
   if keysCanText Then
     begin
-      keysText := u_CopyStr( Text );
+      keysText := u_CopyUTF8Str( Text );
       keysMax  := MaxSymbols;
     end;
 end;
 
-function key_GetText : String;
+function key_GetText : UTF8String;
 begin
   Result := keysText;
 end;
@@ -251,17 +251,17 @@ begin
   keysLast[ KA_UP   ] := 0;
 end;
 
-procedure key_InputText( const Text : String );
+procedure key_InputText( const Text : UTF8String );
   var
-    c : Char;
+    c : AnsiChar;
 begin
   if ( u_Length( keysText ) < keysMax ) or ( keysMax = -1 ) Then
     begin
       if ( appFlags and APP_USE_ENGLISH_INPUT > 0 ) and ( Text[ 1 ] <> ' ' )  Then
         begin
-          c := Char( scancode_to_utf8( keysLast[ 0 ] ) );
+          c := AnsiChar( scancode_to_utf8( keysLast[ 0 ] ) );
           if c <> #0 Then
-            keysText := keysText + c;
+            keysText := keysText + UTF8String( c );
         end else
           keysText := keysText + Text;
     end;
@@ -270,7 +270,7 @@ begin
     begin
       if ( appFlags and APP_USE_ENGLISH_INPUT > 0 ) and ( Text[ 1 ] <> ' ' )  Then
         begin
-          c := Char( scancode_to_utf8( keysLast[ 0 ] ) );
+          c := AnsiChar( scancode_to_utf8( keysLast[ 0 ] ) );
           if c <> #0 Then
             key_PInputChar( c );
         end else
@@ -397,6 +397,7 @@ end;
 function SCA( KeyCode : DWORD ) : DWORD;
 begin
   Result := KeyCode;
+  if ( KeyCode = K_SUPER_L ) or ( KeyCode = K_SUPER_R ) Then Result := K_SUPER;
   if ( KeyCode = K_SHIFT_L ) or ( KeyCode = K_SHIFT_R ) Then Result := K_SHIFT;
   if ( KeyCode = K_CTRL_L ) or ( KeyCode = K_CTRL_R ) Then Result := K_CTRL;
   if ( KeyCode = K_ALT_L ) or ( KeyCode = K_ALT_R ) Then Result := K_ALT;
@@ -411,9 +412,9 @@ begin
     end;
 end;
 
-function _key_GetText : PChar;
+function _key_GetText : PAnsiChar;
 begin
-  Result := u_GetPChar( key_GetText() );
+  Result := u_GetPAnsiChar( key_GetText() );
 end;
 
 end.

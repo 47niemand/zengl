@@ -48,10 +48,10 @@ const
   FSM_CUR    = $02;
   FSM_END    = $03;
 
-function  file_Open( var FileHandle : zglTFile; const FileName : String; Mode : Byte ) : Boolean;
-function  file_MakeDir( const Directory : String ) : Boolean;
-function  file_Remove( const Name : String ) : Boolean;
-function  file_Exists( const Name : String ) : Boolean;
+function  file_Open( var FileHandle : zglTFile; const FileName : UTF8String; Mode : Byte ) : Boolean;
+function  file_MakeDir( const Directory : UTF8String ) : Boolean;
+function  file_Remove( const Name : UTF8String ) : Boolean;
+function  file_Exists( const Name : UTF8String ) : Boolean;
 function  file_Seek( FileHandle : zglTFile; Offset, Mode : Integer ) : LongWord;
 function  file_GetPos( FileHandle : zglTFile ) : LongWord;
 function  file_Read( FileHandle : zglTFile; var Buffer; Bytes : LongWord ) : LongWord;
@@ -59,20 +59,20 @@ function  file_Write( FileHandle : zglTFile; const Buffer; Bytes : LongWord ) : 
 function  file_GetSize( FileHandle : zglTFile ) : LongWord;
 procedure file_Flush( FileHandle : zglTFile );
 procedure file_Close( var FileHandle : zglTFile );
-procedure file_Find( const Directory : String; var List : zglTFileList; FindDir : Boolean );
-function  file_GetName( const FileName : String ) : String;
-function  file_GetExtension( const FileName : String ) : String;
-function  file_GetDirectory( const FileName : String ) : String;
-procedure file_SetPath( const Path : String );
+procedure file_Find( const Directory : UTF8String; var List : zglTFileList; FindDir : Boolean );
+function  file_GetName( const FileName : UTF8String ) : UTF8String;
+function  file_GetExtension( const FileName : UTF8String ) : UTF8String;
+function  file_GetDirectory( const FileName : UTF8String ) : UTF8String;
+procedure file_SetPath( const Path : UTF8String );
 
 {$IFDEF USE_ZIP}
-function  file_OpenArchive( const FileName : String; const Password : String = '' ) : Boolean;
+function  file_OpenArchive( const FileName : UTF8String; const Password : UTF8String = '' ) : Boolean;
 procedure file_CloseArchive;
 {$ENDIF}
 
-function _file_GetName( const FileName : String ) : PChar;
-function _file_GetExtension( const FileName : String ) : PChar;
-function _file_GetDirectory( const FileName : String ) : PChar;
+function _file_GetName( const FileName : UTF8String ) : PAnsiChar;
+function _file_GetExtension( const FileName : UTF8String ) : PAnsiChar;
+function _file_GetDirectory( const FileName : UTF8String ) : PAnsiChar;
 
 implementation
 uses
@@ -82,9 +82,10 @@ uses
   zgl_utils;
 
 var
-  filePath : String = '';
+  filePath : UTF8String = '';
+  wideStr  : PWideChar;
 
-function GetDir( const Path : String ) : String;
+function GetDir( const Path : UTF8String ) : UTF8String;
   var
     len : Integer;
 begin
@@ -92,10 +93,10 @@ begin
   if ( len > 0 ) and ( Path[ len ] <> '/' ) {$IFDEF WINDOWS} and ( Path[ len ] <> '\' ) {$ENDIF} Then
     Result := Path + '/'
   else
-    Result := u_CopyStr( Path );
+    Result := u_CopyUTF8Str( Path );
 end;
 
-function file_Open( var FileHandle : zglTFile; const FileName : String; Mode : Byte ) : Boolean;
+function file_Open( var FileHandle : zglTFile; const FileName : UTF8String; Mode : Byte ) : Boolean;
 begin
   {$IFDEF USE_ZIP}
   if Assigned( zipCurrent ) Then
@@ -117,15 +118,17 @@ begin
     end;
   {$ENDIF}
 
+  wideStr := u_GetPWideChar( filePath + FileName );
   case Mode of
-    FOM_CREATE: FileHandle := CreateFile( PChar( filePath + FileName ), GENERIC_READ or GENERIC_WRITE, 0, nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
-    FOM_OPENR:  FileHandle := CreateFile( PChar( filePath + FileName ), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0 );
-    FOM_OPENRW: FileHandle := CreateFile( PChar( filePath + FileName ), GENERIC_READ or GENERIC_WRITE, FILE_SHARE_READ or FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0 );
+    FOM_CREATE: FileHandle := CreateFileW( wideStr, GENERIC_READ or GENERIC_WRITE, 0, nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0 );
+    FOM_OPENR:  FileHandle := CreateFileW( wideStr, GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, 0, 0 );
+    FOM_OPENRW: FileHandle := CreateFileW( wideStr, GENERIC_READ or GENERIC_WRITE, FILE_SHARE_READ or FILE_SHARE_WRITE, nil, OPEN_EXISTING, 0, 0 );
   end;
+  FreeMem( wideStr );
   Result := FileHandle <> FILE_ERROR;
 end;
 
-function file_MakeDir( const Directory : String ) : Boolean;
+function file_MakeDir( const Directory : UTF8String ) : Boolean;
 begin
   {$IFDEF USE_ZIP}
   if Assigned( zipCurrent ) Then
@@ -135,15 +138,16 @@ begin
     end;
   {$ENDIF}
 
-  Result := CreateDirectory( PChar( filePath + Directory ), nil );
+  wideStr := u_GetPWideChar( filePath + Directory );
+  Result := CreateDirectoryW( wideStr, nil );
+  FreeMem( wideStr );
 end;
 
-function file_Remove( const Name : String ) : Boolean;
+function file_Remove( const Name : UTF8String ) : Boolean;
   var
-    attr : LongWord;
     i    : Integer;
     dir  : Boolean;
-    path : String;
+    path : UTF8String;
     list : zglTFileList;
 begin
   {$IFDEF USE_ZIP}
@@ -160,8 +164,9 @@ begin
       exit;
     end;
 
-  attr := GetFileAttributes( PChar( filePath + Name ) );
-  dir  := attr and FILE_ATTRIBUTE_DIRECTORY > 0;
+  wideStr := u_GetPWideChar( filePath + Name );
+  dir := GetFileAttributesW( wideStr ) and FILE_ATTRIBUTE_DIRECTORY > 0;
+  FreeMem( wideStr );
 
   if dir Then
     begin
@@ -175,12 +180,18 @@ begin
       for i := 2 to list.Count - 1 do
         file_Remove( path + list.Items[ i ] );
 
-      Result := RemoveDirectory( PChar( filePath + Name ) );
+      wideStr := u_GetPWideChar( filePath + Name );
+      Result := RemoveDirectoryW( wideStr );
+      FreeMem( wideStr );
     end else
-      Result := DeleteFile( PChar( filePath + Name ) );
+      begin
+        wideStr := u_GetPWideChar( filePath + Name );
+        Result := DeleteFileW( wideStr );
+        FreeMem( wideStr );
+      end;
 end;
 
-function file_Exists( const Name : String ) : Boolean;
+function file_Exists( const Name : UTF8String ) : Boolean;
   {$IFDEF USE_ZIP}
   var
     zipStat : Tzip_stat;
@@ -193,7 +204,9 @@ begin
       exit;
     end;
   {$ENDIF}
-  Result := GetFileAttributes( PChar( filePath + Name ) ) <> $FFFFFFFF;
+  wideStr := u_GetPWideChar( filePath + Name );
+  Result  := GetFileAttributesW( wideStr ) <> $FFFFFFFF;
+  FreeMem( wideStr );
 end;
 
 function file_Seek( FileHandle : zglTFile; Offset, Mode : Integer ) : LongWord;
@@ -297,10 +310,10 @@ begin
   FileHandle := FILE_ERROR;
 end;
 
-procedure file_Find( const Directory : String; var List : zglTFileList; FindDir : Boolean );
+procedure file_Find( const Directory : UTF8String; var List : zglTFileList; FindDir : Boolean );
   var
     First : THandle;
-    FList : WIN32_FIND_DATA;
+    FList : WIN32_FIND_DATAW;
   {$IFDEF USE_ZIP}
     count : Integer;
     name  : PAnsiChar;
@@ -319,7 +332,7 @@ begin
           if ( file_GetDirectory( name ) = Directory ) and ( ( FindDir and ( name[ len - 1 ] = '/' ) ) or ( ( not FindDir ) and ( name[ len - 1 ] <> '/' ) ) ) Then
             begin
               SetLength( List.Items, List.Count + 1 );
-              List.Items[ List.Count ] := u_CopyStr( name );
+              List.Items[ List.Count ] := u_CopyUTF8Str( name );
               INC( List.Count );
             end;
         end;
@@ -330,7 +343,9 @@ begin
     end;
   {$ENDIF}
 
-  First := FindFirstFile( PChar( GetDir( filePath + Directory ) + '*' ), FList );
+  wideStr := u_GetPWideChar( filePath + Directory + '*' );
+  First   := FindFirstFileW( wideStr, FList );
+  FreeMem( wideStr );
   repeat
     if FindDir Then
       begin
@@ -338,16 +353,16 @@ begin
       end else
         if FList.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY > 0 Then continue;
     SetLength( List.Items, List.Count + 1 );
-    List.Items[ List.Count ] := FList.cFileName;
+    List.Items[ List.Count ] := u_GetUTF8String( FList.cFileName );
     INC( List.Count );
-  until not FindNextFile( First, FList );
+  until not FindNextFileW( First, FList );
   FindClose( First );
 
   if List.Count > 2 Then
     u_SortList( List, 0, List.Count - 1 );
 end;
 
-procedure GetStr( const Str : String; var Result : String; const d : Char; const b : Boolean );
+procedure GetStr( const Str : UTF8String; var Result : UTF8String; const d : AnsiChar; const b : Boolean );
   var
     i, pos, l : Integer;
 begin
@@ -365,9 +380,9 @@ begin
     Result := copy( Str, l - ( l - pos ) + 1, ( l - pos ) );
 end;
 
-function file_GetName( const FileName : String ) : String;
+function file_GetName( const FileName : UTF8String ) : UTF8String;
   var
-    tmp : String;
+    tmp : UTF8String;
 begin
   GetStr( FileName, Result, '/', FALSE );
   if Result = FileName Then
@@ -377,9 +392,9 @@ begin
     Result := copy( Result, 1, length( Result ) - length( tmp ) - 1 );
 end;
 
-function file_GetExtension( const FileName : String ) : String;
+function file_GetExtension( const FileName : UTF8String ) : UTF8String;
   var
-    tmp : String;
+    tmp : UTF8String;
 begin
   GetStr( FileName, tmp, '/', FALSE );
   if tmp = FileName Then
@@ -389,20 +404,20 @@ begin
     Result := '';
 end;
 
-function file_GetDirectory( const FileName : String ) : String;
+function file_GetDirectory( const FileName : UTF8String ) : UTF8String;
 begin
   GetStr( FileName, Result, '/', TRUE );
   if Result = '' Then
     GetStr( FileName, Result, '\', TRUE );
 end;
 
-procedure file_SetPath( const Path : String );
+procedure file_SetPath( const Path : UTF8String );
 begin
   filePath := GetDir( Path );
 end;
 
 {$IFDEF USE_ZIP}
-function file_OpenArchive( const FileName : String; const Password : String = '' ) : Boolean;
+function file_OpenArchive( const FileName : UTF8String; const Password : UTF8String = '' ) : Boolean;
   var
     error : Integer;
     res   : zglTZIPResource;
@@ -416,7 +431,7 @@ begin
       exit;
     end;
 
-  zipCurrent := zip_open( PAnsiChar( FileName ), 0, error );
+  zipCurrent := zip_open( PAnsiChar( filePath + FileName ), 0, error );
   Result     := zipCurrent <> nil;
 
   if not Result Then
@@ -448,19 +463,19 @@ begin
 end;
 {$ENDIF}
 
-function _file_GetName( const FileName : String ) : PChar;
+function _file_GetName( const FileName : UTF8String ) : PAnsiChar;
 begin
-  Result := u_GetPChar( file_GetName( FileName ) );
+  Result := u_GetPAnsiChar( file_GetName( FileName ) );
 end;
 
-function _file_GetExtension( const FileName : String ) : PChar;
+function _file_GetExtension( const FileName : UTF8String ) : PAnsiChar;
 begin
-  Result := u_GetPChar( file_GetExtension( FileName ) );
+  Result := u_GetPAnsiChar( file_GetExtension( FileName ) );
 end;
 
-function _file_GetDirectory( const FileName : String ) : PChar;
+function _file_GetDirectory( const FileName : UTF8String ) : PAnsiChar;
 begin
-  Result := u_GetPChar( file_GetDirectory( FileName ) );
+  Result := u_GetPAnsiChar( file_GetDirectory( FileName ) );
 end;
 
 end.

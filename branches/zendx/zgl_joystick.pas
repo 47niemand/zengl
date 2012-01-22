@@ -27,11 +27,11 @@ uses
   Windows;
 
   type
-    PJOYCAPS = ^TJOYCAPS;
-    TJOYCAPS = packed record
+    PJOYCAPSW = ^TJOYCAPSW;
+    TJOYCAPSW = packed record
       wMid: Word;
       wPid: Word;
-      szPname: array[ 0..31 ] of AnsiChar;
+      szPname: array[ 0..31 ] of WideChar;
       wXmin: LongWord;
       wXmax: LongWord;
       wYmin: LongWord;
@@ -51,8 +51,8 @@ uses
       wMaxAxes: LongWord;
       wNumAxes: LongWord;
       wMaxButtons: LongWord;
-      szRegKey: array[ 0..31 ] of AnsiChar;
-      szOEMVxD: array[ 0..259 ] of AnsiChar;
+      szRegKey: array[ 0..31 ] of WideChar;
+      szOEMVxD: array[ 0..259 ] of WideChar;
   end;
 
   type
@@ -102,13 +102,13 @@ const
   JOYCAPS_POVCTS  = 64;
 
   function joyGetNumDevs : LongWord; stdcall; external 'winmm.dll' name 'joyGetNumDevs';
-  function joyGetDevCaps( uJoyID : LongWord; lpCaps : PJOYCAPS; uSize : LongWord ) : LongWord; stdcall; external 'winmm.dll' name 'joyGetDevCapsA';
+  function joyGetDevCapsW( uJoyID : LongWord; lpCaps : PJOYCAPSW; uSize : LongWord ) : LongWord; stdcall; external 'winmm.dll' name 'joyGetDevCapsW';
   function joyGetPosEx( uJoyID : LongWord; lpInfo : PJOYINFOEX ) : LongWord; stdcall; external 'winmm.dll' name 'joyGetPosEx';
 
 type
   zglPJoyInfo = ^zglTJoyInfo;
   zglTJoyInfo = record
-    Name   : AnsiString;
+    Name   : UTF8String;
     Count  : record
       Axes    : Integer;
       Buttons : Integer;
@@ -129,7 +129,7 @@ type
 type
   zglPJoy = ^zglTJoy;
   zglTJoy = record
-    caps    : TJOYCAPS;
+    caps    : TJOYCAPSW;
     axesMap : array[ 0..5 ] of Byte;
     Info    : zglTJoyInfo;
     State   : zglTJoyState;
@@ -183,9 +183,9 @@ begin
 
   j := joyGetNumDevs();
   for i := 0 to j - 1 do
-    if joyGetDevCaps( i, @joyArray[ i ].caps, SizeOf( TJOYCAPS ) ) = 0 Then
+    if joyGetDevCapsW( i, @joyArray[ i ].caps, SizeOf( TJOYCAPSW ) ) = 0 Then
       begin
-        joyArray[ i ].Info.Name          := joyArray[ i ].caps.szPname;
+        joyArray[ i ].Info.Name          := u_GetUTF8String( joyArray[ i ].caps.szPname );
         joyArray[ i ].Info.Count.Axes    := joyArray[ i ].caps.wNumAxes;
         joyArray[ i ].Info.Count.Buttons := joyArray[ i ].caps.wNumButtons;
 

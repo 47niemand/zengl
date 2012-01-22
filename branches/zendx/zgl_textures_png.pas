@@ -29,9 +29,9 @@ uses
   zgl_memory;
 
 const
-  PNG_EXTENSION : array[ 0..3 ] of Char = ( 'P', 'N', 'G', #0 );
+  PNG_EXTENSION : UTF8String = 'PNG';
 
-procedure png_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
+procedure png_LoadFromFile( const FileName : UTF8String; var Data : Pointer; var W, H, Format : Word );
 procedure png_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
 
 implementation
@@ -380,7 +380,7 @@ begin
   pngHastRNS := TRUE;
 end;
 
-procedure png_LoadFromFile( const FileName : String; var Data : Pointer; var W, H, Format : Word );
+procedure png_LoadFromFile( const FileName : UTF8String; var Data : Pointer; var W, H, Format : Word );
   var
     pngMem : zglTMemory;
 begin
@@ -469,7 +469,7 @@ end;
 
 {$IFDEF USE_PNG}
 initialization
-  zgl_Reg( TEX_FORMAT_EXTENSION,   @PNG_EXTENSION[ 0 ] );
+  zgl_Reg( TEX_FORMAT_EXTENSION,   @PNG_EXTENSION[ 1 ] );
   zgl_Reg( TEX_FORMAT_FILE_LOADER, @png_LoadFromFile );
   zgl_Reg( TEX_FORMAT_MEM_LOADER,  @png_LoadFromMemory );
 {$ENDIF}

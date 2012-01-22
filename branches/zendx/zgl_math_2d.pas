@@ -91,6 +91,7 @@ uses
   zgl_main,
   zgl_direct3d_all;
 
+{$IFDEF USE_TRIANGULATION}
 var
   tess        : Integer;
   tessMode    : Integer;
@@ -100,6 +101,7 @@ var
   tessVertex  : array[ 0..2 ] of zglTPoint2D;
   tessVCount  : Integer;
   tessVerts   : array of zglTPoint2D;
+{$ENDIF}
 
 function ArcTan2( dx, dy : Single ) : Single;
 begin

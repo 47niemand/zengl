@@ -30,33 +30,37 @@ uses
 const
   LIB_ERROR  = 0;
 
-function u_IntToStr( Value : Integer ) : String;
-function u_StrToInt( const Value : String ) : Integer;
-function u_FloatToStr( Value : Single; Digits : Integer = 2 ) : String;
-function u_StrToFloat( const Value : String ) : Single;
-function u_BoolToStr( Value : Boolean ) : String;
-function u_StrToBool( const Value : String ) : Boolean;
+function u_IntToStr( Value : Integer ) : UTF8String;
+function u_StrToInt( const Value : UTF8String ) : Integer;
+function u_FloatToStr( Value : Single; Digits : Integer = 2 ) : UTF8String;
+function u_StrToFloat( const Value : UTF8String ) : Single;
+function u_BoolToStr( Value : Boolean ) : UTF8String;
+function u_StrToBool( const Value : UTF8String ) : Boolean;
 
-function u_CopyAnsiStr( const Str : AnsiString ) : AnsiString;
-function u_CopyStr( const Str : String ) : String;
-function u_GetPAnsiChar( const Str : AnsiString ) : PAnsiChar;
-function u_GetPChar( const Str : String ) : PChar;
-// Только для английских символов попадающих в диапазон 0..127
-function u_StrUp( const Str : String ) : String;
-function u_StrDown( const Str : String ) : String;
-// Удаляет один символ из utf8-строки
-procedure u_Backspace( var Str : String );
-// Возвращает количество символов в utf8-строке
-function  u_Length( const Str : String ) : Integer;
-// Возвращает количество слов, разделеных разделителем d
-function  u_Words( const Str : String; D : Char = ' ' ) : Integer;
-function  u_GetWord( const Str : String; N : Integer; D : Char = ' ' ) : String;
+function u_CopyUTF8Str( const Str : UTF8String ) : UTF8String;
+function u_GetPAnsiChar( const Str : UTF8String ) : PAnsiChar;
+function u_GetUTF8String( const Str : PWideChar ) : UTF8String;
+function u_GetPWideChar( const Str : UTF8String ) : PWideChar;
+// Only for latin symbols in range 0..127
+function u_StrUp( const Str : UTF8String ) : UTF8String;
+function u_StrDown( const Str : UTF8String ) : UTF8String;
+// Removes one symbol from utf8-string
+procedure u_Backspace( var Str : UTF8String );
+// Returns count of symbols in utf8-string
+function  u_Length( const Str : UTF8String ) : Integer;
+// Returns count of words, which a divided by delimiter d
+function  u_Words( const Str : UTF8String; D : AnsiChar = ' ' ) : Integer;
+function  u_GetWord( const Str : UTF8String; N : Integer; D : AnsiChar = ' ' ) : UTF8String;
+// Returns char ID for different encodings
+function u_GetUTF8ID( const Text : UTF8String; Pos : Integer; Shift : PInteger ) : LongWord;
+function u_GetUTF16ID( const Text : String; Pos : Integer; Shift : PInteger ) : LongWord;
+//
 procedure u_SortList( var List : zglTStringList; iLo, iHi: Integer );
 //
-function u_Hash( const Str : AnsiString ) : LongWord;
+function u_Hash( const Str : UTF8String ) : LongWord;
 
-procedure u_Error( const ErrStr : String );
-procedure u_Warning( const ErrStr : String );
+procedure u_Error( const ErrStr : UTF8String );
+procedure u_Warning( const ErrStr : UTF8String );
 
 function u_GetPOT( Value : Integer ) : Integer;
 
@@ -71,12 +75,12 @@ uses
   zgl_font,
   zgl_log;
 
-function u_IntToStr( Value : Integer ) : String;
+function u_IntToStr( Value : Integer ) : UTF8String;
 begin
   Str( Value, Result );
 end;
 
-function u_StrToInt( const Value : String ) : Integer;
+function u_StrToInt( const Value : UTF8String ) : Integer;
   var
     e : Integer;
 begin
@@ -85,12 +89,12 @@ begin
     Result := 0;
 end;
 
-function u_FloatToStr( Value : Single; Digits : Integer = 2 ) : String;
+function u_FloatToStr( Value : Single; Digits : Integer = 2 ) : UTF8String;
 begin
   Str( Value:0:Digits, Result );
 end;
 
-function u_StrToFloat( const Value : String ) : Single;
+function u_StrToFloat( const Value : UTF8String ) : Single;
   var
     e : Integer;
 begin
@@ -99,7 +103,7 @@ begin
     Result := 0;
 end;
 
-function u_BoolToStr( Value : Boolean ) : String;
+function u_BoolToStr( Value : Boolean ) : UTF8String;
 begin
   if Value Then
     Result := 'TRUE'
@@ -107,7 +111,7 @@ begin
     Result := 'FALSE';
 end;
 
-function u_StrToBool( const Value : String ) : Boolean;
+function u_StrToBool( const Value : UTF8String ) : Boolean;
 begin
   if Value = '1' Then
     Result := TRUE
@@ -118,7 +122,7 @@ begin
       Result := FALSE;
 end;
 
-function u_CopyAnsiStr( const Str : AnsiString ) : AnsiString;
+function u_CopyUTF8Str( const Str : UTF8String ) : UTF8String;
   var
     len : Integer;
 begin
@@ -128,17 +132,7 @@ begin
     System.Move( Str[ 1 ], Result[ 1 ], len );
 end;
 
-function u_CopyStr( const Str : String ) : String;
-  var
-    len : Integer;
-begin
-  len := length( Str );
-  SetLength( Result, len );
-  if len > 0 Then
-    System.Move( Str[ 1 ], Result[ 1 ], len * SizeOf( Char ) );
-end;
-
-function u_GetPAnsiChar( const Str : AnsiString ) : PAnsiChar;
+function u_GetPAnsiChar( const Str : UTF8String ) : PAnsiChar;
   var
     len : Integer;
 begin
@@ -149,18 +143,27 @@ begin
     System.Move( Str[ 1 ], Result^, len );
 end;
 
-function u_GetPChar( const Str : String ) : PChar;
+function u_GetUTF8String( const Str : PWideChar ) : UTF8String;
   var
     len : Integer;
 begin
-  len := length( Str );
-  GetMem( Result, ( len + 1 ) * SizeOf( Char ) );
-  Result[ len ] := #0;
+  len := WideCharToMultiByte( CP_UTF8, 0, Str, length( Str ), nil, 0, nil, nil );
+  SetLength( Result, len );
   if len > 0 Then
-    System.Move( Str[ 1 ], Result^, len * SizeOf( Char ) );
+    WideCharToMultiByte( CP_UTF8, 0, Str, length( Str ), @Result[ 1 ], len, nil, nil );
 end;
 
-function u_StrUp( const Str : String ) : String;
+function u_GetPWideChar( const Str : UTF8String ) : PWideChar;
+  var
+    len : Integer;
+begin
+  len := MultiByteToWideChar( CP_UTF8, 0, @Str[ 1 ], length( Str ), nil, 0 );
+  GetMem( Result, len * 2 + 2 );
+  Result[ len ] := #0;
+  MultiByteToWideChar( CP_UTF8, 0, @Str[ 1 ], length( Str ), Result, len );
+end;
+
+function u_StrUp( const Str : UTF8String ) : UTF8String;
   var
     i, l : Integer;
 begin
@@ -168,12 +171,12 @@ begin
   SetLength( Result, l );
   for i := 1 to l do
     if ( Byte( Str[ i ] ) >= 97 ) and ( Byte( Str[ i ] ) <= 122 ) Then
-      Result[ i ] := Char( Byte( Str[ i ] ) - 32 )
+      Result[ i ] := AnsiChar( Byte( Str[ i ] ) - 32 )
     else
       Result[ i ] := Str[ i ];
 end;
 
-function u_StrDown( const Str : String ) : String;
+function u_StrDown( const Str : UTF8String ) : UTF8String;
   var
     i, l : Integer;
 begin
@@ -181,12 +184,12 @@ begin
   SetLength( Result, l );
   for i := 1 to l do
     if ( Byte( Str[ i ] ) >= 65 ) and ( Byte( Str[ i ] ) <= 90 ) Then
-      Result[ i ] := Char( Byte( Str[ i ] ) + 32 )
+      Result[ i ] := AnsiChar( Byte( Str[ i ] ) + 32 )
     else
       Result[ i ] := Str[ i ];
 end;
 
-procedure u_Backspace( var Str : String );
+procedure u_Backspace( var Str : UTF8String );
   var
     i, last : Integer;
 begin
@@ -196,13 +199,13 @@ begin
   while i <= length( Str ) do
     begin
       last := i;
-      font_GetCID( Str, last, @i );
+      u_GetUTF8ID( Str, last, @i );
     end;
 
   SetLength( Str, last - 1 )
 end;
 
-function u_Length( const Str : String ) : Integer;
+function u_Length( const Str : UTF8String ) : Integer;
   var
     i : Integer;
 begin
@@ -211,11 +214,11 @@ begin
   while i <= length( Str ) do
     begin
       INC( Result );
-      font_GetCID( Str, i, @i );
+      u_GetUTF8ID( Str, i, @i );
     end;
 end;
 
-function u_Words( const Str : String; D : Char = ' ' ) : Integer;
+function u_Words( const Str : UTF8String; D : AnsiChar = ' ' ) : Integer;
   var
     i, m : Integer;
 begin
@@ -232,7 +235,7 @@ begin
     end;
 end;
 
-function u_GetWord( const Str : String; N : Integer; D : Char = ' ' ) : String;
+function u_GetWord( const Str : UTF8String; N : Integer; D : AnsiChar = ' ' ) : UTF8String;
   label b;
   var
     i, p : Integer;
@@ -255,10 +258,78 @@ b:
   Delete( Result, p, length( Result ) - p + 1 );
 end;
 
+function u_GetUTF8ID( const Text : UTF8String; Pos : Integer; Shift : PInteger ) : LongWord;
+begin
+  case Byte( Text[ Pos ] ) of
+    0..127:
+      begin
+        Result := Byte( Text[ Pos ] );
+        if Assigned( Shift ) Then
+          Shift^ := Pos + 1;
+      end;
+
+    192..223:
+      begin
+        Result := ( Byte( Text[ Pos ] ) - 192 ) * 64 + ( Byte( Text[ Pos + 1 ] ) - 128 );
+        if Assigned( Shift ) Then
+          Shift^ := Pos + 2;
+      end;
+
+    224..239:
+      begin
+        Result := ( Byte( Text[ Pos ] ) - 224 ) * 4096 + ( Byte( Text[ Pos + 1 ] ) - 128 ) * 64 + ( Byte( Text[ Pos + 2 ] ) - 128 );
+        if Assigned( Shift ) Then
+          Shift^ := Pos + 3;
+      end;
+
+    240..247:
+      begin
+        Result := ( Byte( Text[ Pos ] ) - 240 ) * 262144 + ( Byte( Text[ Pos + 1 ] ) - 128 ) * 4096 + ( Byte( Text[ Pos + 2 ] ) - 128 ) * 64 +
+                  ( Byte( Text[ Pos + 3 ] ) - 128 );
+        if Assigned( Shift ) Then
+          Shift^ := Pos + 4;
+      end;
+
+    248..251:
+      begin
+        Result := ( Byte( Text[ Pos ] ) - 248 ) * 16777216 + ( Byte( Text[ Pos + 1 ] ) - 128 ) * 262144 + ( Byte( Text[ Pos + 2 ] ) - 128 ) * 4096 +
+                  ( Byte( Text[ Pos + 3 ] ) - 128) * 64 + ( Byte( Text[ Pos + 4 ] ) - 128 );
+        if Assigned( Shift ) Then
+          Shift^ := Pos + 5;
+      end;
+
+    252..253:
+      begin
+        Result := ( Byte( Text[ Pos ] ) - 252 ) * 1073741824 + ( Byte( Text[ Pos + 1 ] ) - 128 ) * 16777216 + ( Byte( Text[ Pos + 2 ] ) - 128 ) * 262144 +
+                  ( Byte( Text[ Pos + 3 ] ) - 128 ) * 4096 + ( Byte( Text[ Pos + 4 ] ) - 128 ) * 64 + ( Byte( Text[ Pos + 5 ] ) - 128 );
+        if Assigned( Shift ) Then
+          Shift^ := Pos + 6;
+      end;
+
+    254..255:
+      begin
+        Result := 0;
+        if Assigned( Shift ) Then
+          Shift^ := Pos + 1;
+      end;
+  else
+    Result := 0;
+    if Assigned( Shift ) Then
+      Shift^ := Pos + 1;
+  end;
+end;
+
+function u_GetUTF16ID( const Text : String; Pos : Integer; Shift : PInteger ) : LongWord;
+begin
+  if Assigned( Shift ) Then
+    Shift^ := Pos + 1;
+  Result := Word( Text[ Pos ] );
+end;
+
 procedure u_SortList( var List : zglTStringList; iLo, iHi: Integer );
   var
     lo, hi : Integer;
-    mid, t : String;
+    mid, t : UTF8String;
 begin
   lo  := iLo;
   hi  := iHi;
@@ -281,7 +352,7 @@ begin
   if lo < iHi Then u_SortList( List, lo, iHi );
 end;
 
-function u_Hash( const Str : AnsiString ) : LongWord;
+function u_Hash( const Str : UTF8String ) : LongWord;
   var
     data      : PAnsiChar;
     hash, tmp : LongWord;
@@ -339,16 +410,24 @@ begin
   Result := hash;
 end;
 
-procedure u_Error( const ErrStr : String );
+procedure u_Error( const ErrStr : UTF8String );
+  var
+    wideStr : PWideChar;
 begin
-  MessageBox( 0, PChar( ErrStr ), 'ERROR!', MB_OK or MB_ICONERROR );
+  wideStr := u_GetPWideChar( ErrStr );
+  MessageBoxW( 0, wideStr, 'ERROR!', MB_OK or MB_ICONERROR );
+  FreeMem( wideStr );
 
   log_Add( 'ERROR: ' + ErrStr );
 end;
 
-procedure u_Warning( const ErrStr : String );
+procedure u_Warning( const ErrStr : UTF8String );
+  var
+    wideStr : PWideChar;
 begin
-  MessageBox( 0, PChar( ErrStr ), 'WARNING!', MB_OK or MB_ICONWARNING );
+  wideStr := u_GetPWideChar( ErrStr );
+  MessageBoxW( 0, wideStr, 'WARNING!', MB_OK or MB_ICONWARNING );
+  FreeMem( wideStr );
 
   log_Add( 'WARNING: ' + ErrStr );
 end;

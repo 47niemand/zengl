@@ -54,9 +54,9 @@ uses
   zgl_memory;
 
 const
-  OGG_EXTENSION : array[ 0..3 ] of Char = ( 'O', 'G', 'G', #0 );
+  OGG_EXTENSION : UTF8String = 'OGG';
 
-procedure ogg_LoadFromFile( const FileName : String; var Data : Pointer; var Size, Format, Frequency : LongWord );
+procedure ogg_LoadFromFile( const FileName : UTF8String; var Data : Pointer; var Size, Format, Frequency : LongWord );
 procedure ogg_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var Size, Format, Frequency : LongWord );
 
 implementation
@@ -345,7 +345,7 @@ begin
   oggLoad := TRUE;
 end;
 
-function ogg_DecoderOpen( var Stream : zglTSoundStream; const FileName : String ) : Boolean;
+function ogg_DecoderOpen( var Stream : zglTSoundStream; const FileName : UTF8String ) : Boolean;
 begin
   Result := FALSE;
   if not oggLoad Then ogg_Init;
@@ -451,7 +451,7 @@ begin
   Result := bytesRead;
 end;
 
-procedure ogg_LoadFromFile( const FileName : String; var Data : Pointer; var Size, Format, Frequency : LongWord );
+procedure ogg_LoadFromFile( const FileName : UTF8String; var Data : Pointer; var Size, Format, Frequency : LongWord );
   var
     oggMemory : zglTMemory;
 begin
@@ -511,7 +511,7 @@ initialization
   oggDecoder.Read    := ogg_DecoderRead;
   oggDecoder.Loop    := ogg_DecoderLoop;
   oggDecoder.Close   := ogg_DecoderClose;
-  zgl_Reg( SND_FORMAT_EXTENSION,   @OGG_EXTENSION[ 0 ] );
+  zgl_Reg( SND_FORMAT_EXTENSION,   @OGG_EXTENSION[ 1 ] );
   zgl_Reg( SND_FORMAT_FILE_LOADER, @ogg_LoadFromFile );
   zgl_Reg( SND_FORMAT_MEM_LOADER,  @ogg_LoadFromMemory );
   zgl_Reg( SND_FORMAT_DECODER,     @oggDecoder );

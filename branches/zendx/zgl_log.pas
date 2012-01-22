@@ -29,14 +29,14 @@ uses
 
 procedure log_Init;
 procedure log_Close;
-procedure log_Add( const Message : AnsiString; Timings : Boolean = TRUE );
+procedure log_Add( const Message : UTF8String; Timings : Boolean = TRUE );
 procedure log_Flush;
-function  log_Timing : AnsiString;
+function  log_Timing : UTF8String;
 
 var
   log      : zglTFile = FILE_ERROR;
   logStart : LongWord;
-  logFile  : PChar;
+  logFile  : PAnsiChar;
 
 implementation
 uses
@@ -47,7 +47,7 @@ uses
 procedure log_Init;
   var
     i  : Integer;
-    es : String;
+    es : UTF8String;
 begin
   if ( appFlags and APP_USE_LOG = 0 ) Then exit;
   if log <> FILE_ERROR Then exit;
@@ -55,9 +55,9 @@ begin
   logStart := Round( timer_GetTicks() );
 
   if not Assigned( logFile ) Then
-    logFile := u_GetPChar( 'log.txt' )
+    logFile := u_GetPAnsiChar( 'log.txt' )
   else
-    logFile := u_GetPChar( logFile );
+    logFile := u_GetPAnsiChar( logFile );
 
   file_Open( log, logFile, FOM_CREATE );
   // crazy code :)
@@ -80,9 +80,9 @@ begin
     file_Close( log );
 end;
 
-procedure log_Add( const Message : AnsiString; Timings : Boolean = TRUE );
+procedure log_Add( const Message : UTF8String; Timings : Boolean = TRUE );
   var
-    str : AnsiString;
+    str : UTF8String;
 begin
   if not appLog Then exit;
   if Timings Then
@@ -103,7 +103,7 @@ begin
     file_Flush( log );
 end;
 
-function log_Timing : AnsiString;
+function log_Timing : UTF8String;
   var
     v : LongWord;
 begin
