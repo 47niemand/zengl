@@ -151,7 +151,7 @@ const
   JOY_POVX   = 6;
   JOY_POVY   = 7;
 
-  JS_AXIS : array[ 0..5 ] of LongWord = ( 9 {X}, 11 {Y}, 13 {Z}, 18 {R}, 20 {U}, 22 {V} );
+  JS_AXIS : array[ 0..5 ] of LongWord = ( 17 {X}, 19 {Y}, 21 {Z}, 26 {R}, 28 {U}, 30 {V} );
 
 function  joy_Init : Byte;
 procedure joy_Proc;
