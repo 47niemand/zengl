@@ -10,8 +10,8 @@
 { chipmunk homepage:                         }
 { http://code.google.com/p/chipmunk-physics/ }
 {                                            }
-{ header version:    0.99 beta 9             }
-{ date:              2012.01.24              }
+{ header version:    0.99 beta 10            }
+{ date:              2012.01.26              }
 { header homepage:                           }
 { http://code.google.com/p/chipmunk-pascal/  }
 {                                            }
@@ -903,7 +903,7 @@ var
   cpPolyShapeInit : function ( poly : PcpPolyShape; body : PcpBody; numVerts : Integer; verts : PcpVect; offset : cpVect ) : PcpPolyShape; cdecl;
   cpPolyShapeNew : function( body : PcpBody; numVerts : Integer; verts : PcpVect; offset : cpVect ) : PcpShape; cdecl;
 
-  cpBoxShapeInit : function( poly : cpPolyShape; body : cpBody; width : cpFloat; height : cpFloat ) : PcpPolyShape; cdecl;
+  cpBoxShapeInit : function( poly : PcpPolyShape; body : PcpBody; width : cpFloat; height : cpFloat ) : PcpPolyShape; cdecl;
   cpBoxShapeNew : function( body : PcpBody; width : cpFloat; height : cpFloat ) : PcpShape; cdecl;
 
   // Check that a set of vertexes has a correct winding and that they are convex
