@@ -954,7 +954,7 @@ var
 
   cpPinJointGetClass: function: PcpConstraintClass; cdecl;
   cpPinJointAlloc : function : PcpPinJoint; cdecl;
-  cpPinJointInit : function( joint : PcpPinJoint; a : PcpBody; b : PcpBody; anchr1 : cpVect; anchr2 : cpVect ) : cpPinJoint; cdecl;
+  cpPinJointInit : function( joint : PcpPinJoint; a : PcpBody; b : PcpBody; anchr1 : cpVect; anchr2 : cpVect ) : PcpPinJoint; cdecl;
   cpPinJointNew : function( a : PcpBody; b : PcpBody; anchr1 : cpVect; anchr2 : cpVect ) : PcpConstraint; cdecl;
 
   cpSlideJointGetClass: function: PcpConstraintClass; cdecl;
