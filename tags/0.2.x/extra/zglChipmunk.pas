@@ -851,7 +851,7 @@ var
   cpContactInit : function( con : PcpContact; p : cpVect; n : cpVect; dist : cpFloat; hasg : cpHashValue ) : PcpContact; cdecl;
 
   // Arbiters are allocated in large buffers by the space and don't require a destroy function
-  cpArbiterInit : function( arb : PcpArbiter; a : PcpShape; b : PcpShape ) : cpArbiter; cdecl;
+  cpArbiterInit : function( arb : PcpArbiter; a : PcpShape; b : PcpShape ) : PcpArbiter; cdecl;
 
   // These functions are all intended to be used internally.
   // Inject new contact points into the arbiter while preserving contact history.
