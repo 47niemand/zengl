@@ -10,8 +10,8 @@
 { chipmunk homepage:                         }
 { http://code.google.com/p/chipmunk-physics/ }
 {                                            }
-{ header version:    0.99 beta 10            }
-{ date:              2012.01.26              }
+{ header version:    0.99 beta 11            }
+{ date:              2012.01.29              }
 { header homepage:                           }
 { http://code.google.com/p/chipmunk-pascal/  }
 {                                            }
@@ -865,7 +865,7 @@ var
   // Arbiter Helper Functions
   cpArbiterTotalImpulse : function( arb : PcpArbiter ) : cpVect; cdecl;
   cpArbiterTotalImpulseWithFriction : function( arb : PcpArbiter ) : cpVect; cdecl;
-  cpArbiterIgnore : procedure( arb : PcpArbiter );
+  cpArbiterIgnore : procedure( arb : PcpArbiter ); cdecl;
 
 // SHAPE
   // Low level shape initialization func.
