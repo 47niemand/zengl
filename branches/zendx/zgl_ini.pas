@@ -81,6 +81,7 @@ var
 
 implementation
 uses
+  zgl_types,
   zgl_file,
   zgl_utils;
 
