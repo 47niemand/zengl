@@ -316,6 +316,8 @@ function snd_Init : Boolean;
     i : Integer;
 begin
   Result := FALSE;
+
+  if sndInitialized Then exit;
 {$IFDEF USE_OPENAL}
   log_Add( 'OpenAL: load ' + libopenal  );
   if not InitOpenAL Then
