@@ -242,4 +242,7 @@ end;
 initialization
   wndCaption := cs_ZenGL;
 
+finalization
+  FreeMem( wndCaptionW );
+
 end.
