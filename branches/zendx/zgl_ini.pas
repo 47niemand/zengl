@@ -490,8 +490,8 @@ procedure ini_Process;
     lastPos     : LongWord;
     len         : Integer;
 begin
-  str         := '';
-  lastPos     := 0;
+  str     := '';
+  lastPos := 0;
   while iniMem.Position < iniMem.Size do
     begin
       mem_Read( iniMem, lineEndCode, 1 );
@@ -515,7 +515,6 @@ begin
           SetLength( str, len );
           Move( PByte( Ptr( iniMem.Memory ) + lastPos )^, str[ 1 ], len );
           addData( str );
-          writeln( str );
 
           lastPos := iniMem.Position;
         end;
@@ -525,7 +524,6 @@ begin
   SetLength( str, len );
   Move( PByte( Ptr( iniMem.Memory ) + lastPos )^, str[ 1 ], len );
   addData( str );
-  writeln( str );
 end;
 
 procedure ini_Free;
