@@ -44,19 +44,25 @@ uses
   zgl_resources,
 
   zgl_textures,
+  {$IFDEF USE_JPG}
   zgl_textures_jpg,
+  {$ENDIF}
+  {$IFDEF USE_PNG}
   zgl_textures_png,
+  {$ENDIF}
+  {$IFDEF USE_TGA}
   zgl_textures_tga,
-
-  {$IFDEF USE_TEXTURE_ATLAS}
-  zgl_texture_atlas,
   {$ENDIF}
   zgl_render_target,
 
   {$IFDEF USE_SOUND}
   zgl_sound,
-  zgl_sound_wav,
+  {$IFDEF USE_OGG}
   zgl_sound_ogg,
+  {$ENDIF}
+  {$IFDEF USE_WAV}
+  zgl_sound_wav,
+  {$ENDIF}
   {$ENDIF}
 
   zgl_fx,
@@ -200,16 +206,6 @@ exports
   tex_GetData              name prefix + 'tex_GetData',
   tex_Filter               name prefix + 'tex_Filter',
   tex_SetAnisotropy        name prefix + 'tex_SetAnisotropy',
-
-  // Texture Atlases
-  {$IFDEF USE_TEXTURE_ATLAS}
-  atlas_Add                name prefix + 'atlas_Add',
-  atlas_Del                name prefix + 'atlas_Del',
-  atlas_GetFrameCoord      name prefix + 'atlas_GetFrameCoord',
-  atlas_InsertFromTexture  name prefix + 'atlas_InsertFromTexture',
-  atlas_InsertFromFile     name prefix + 'atlas_InsertFromFile',
-  atlas_InsertFromMemory   name prefix + 'atlas_InsertFromMemory',
-  {$ENDIF}
 
   // OpenGL
   Set2DMode                name prefix + 'Set2DMode',
