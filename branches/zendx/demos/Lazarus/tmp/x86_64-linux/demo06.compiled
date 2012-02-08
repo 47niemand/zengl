@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<CONFIG>
-  <Compiler Date="1325531932" Value="/usr/bin/fpc"/>
-  <Params Value=" -MDelphi -Scghi -CX -O3 -g -gl -Xg -Xs -XX -vew -l -Fi/media/DATA/Projects/libs/ZenGL/svn/trunk/demos/Lazarus/tmp/x86_64-linux -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/headers -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/extra -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/src -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/lib/jpeg/x86_64-linux -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/lib/msvcrt/x86_64 -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/lib/ogg/x86_64-linux -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/lib/zlib/x86_64-linux -Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/lib/zip/x86_64-linux &quot;-Fu/media/DATA/Projects/libs/ZenGL/svn/trunk/demos/Lazarus/06 - SEngine 2D/&quot; -FU/media/DATA/Projects/libs/ZenGL/svn/trunk/demos/Lazarus/tmp/x86_64-linux/ -FE/media/DATA/Projects/libs/ZenGL/svn/trunk/bin/x86_64-linux/ demo06.lpr"/>
-</CONFIG>
