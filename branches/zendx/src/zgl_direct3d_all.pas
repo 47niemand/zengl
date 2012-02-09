@@ -338,6 +338,7 @@ uses
   zgl_main,
   zgl_screen,
   zgl_window,
+  zgl_render,
   zgl_render_target,
   zgl_textures,
   zgl_log,
@@ -396,7 +397,7 @@ begin
   {$IFDEF USE_DIRECT3D9}
   d3dDevice.GetRenderTarget( 0, src );
   src.GetDesc( d );
-  d3dDevice.CreateOffscreenPlainSurface( d.Width, d.Height, d.Format, D3DPOOL_SYSTEMMEM, dst, 0 );
+  d3dDevice.CreateOffscreenPlainSurface( d.Width, d.Height, d.Format, D3DPOOL_SYSTEMMEM, dst, nil );
   d3dDevice.GetRenderTargetData( src, dst );
   {$ENDIF}
 

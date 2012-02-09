@@ -62,6 +62,7 @@ uses
   zgl_main,
   zgl_application,
   zgl_screen,
+  zgl_render,
   zgl_utils;
 
 {$IFNDEF FPC}

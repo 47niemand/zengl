@@ -20,7 +20,7 @@
 }
 library ZenGL;
 
-{$I zgl_config.cfg}
+{$I ../../zgl_config.cfg}
 
 uses
   zgl_main,
@@ -28,7 +28,6 @@ uses
 
   zgl_screen,
   zgl_window,
-  zgl_direct3d,
 
   zgl_timers,
 
@@ -66,9 +65,11 @@ uses
   {$ENDIF}
   {$ENDIF}
 
+  zgl_render,
+  zgl_render_2d,
+
   zgl_fx,
   zgl_camera_2d,
-  zgl_render_2d,
 
   zgl_font,
   zgl_text,
@@ -416,7 +417,7 @@ exports
   {$ENDIF}
   ;
 
-{$R *.res}
+{$R ../../ZenGL.res}
 
 begin
 end.

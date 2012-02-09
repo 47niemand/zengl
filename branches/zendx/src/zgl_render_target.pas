@@ -92,7 +92,7 @@ uses
   zgl_main,
   zgl_application,
   zgl_screen,
-  zgl_sprite_2d,
+  zgl_render,
   zgl_render_2d,
   zgl_camera_2d;
 
@@ -148,7 +148,7 @@ begin
         d3dResArray[ Target.ID ] := nil;
     end;
   if not Assigned( d3dResArray[ Target.ID ] ) Then
-    d3dDevice.CreateOffscreenPlainSurface( d.Width, d.Height, d.Format, D3DPOOL_SYSTEMMEM, d3dResArray[ Target.ID ], 0 );
+    d3dDevice.CreateOffscreenPlainSurface( d.Width, d.Height, d.Format, D3DPOOL_SYSTEMMEM, d3dResArray[ Target.ID ], nil );
 
   d3dTexArray[ Target.ID ].Texture.GetSurfaceLevel( 0, src );
   d3dDevice.GetRenderTargetData( src, d3dResArray[ Target.ID ] );

@@ -81,7 +81,7 @@ uses
   zgl_main,
   zgl_screen,
   zgl_window,
-  zgl_log,
+  zgl_render,
   zgl_mouse,
   zgl_keyboard,
   {$IFDEF USE_JOYSTICK}

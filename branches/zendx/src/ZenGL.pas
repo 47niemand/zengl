@@ -28,7 +28,6 @@ uses
 
   zgl_screen,
   zgl_window,
-  zgl_direct3d,
 
   zgl_timers,
 
@@ -67,6 +66,8 @@ uses
 
   zgl_fx,
   zgl_camera_2d,
+
+  zgl_render,
   zgl_render_2d,
 
   zgl_font,

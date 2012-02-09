@@ -89,6 +89,7 @@ uses
   zgl_main,
   zgl_application,
   zgl_window,
+  zgl_render,
   zgl_render_2d,
   zgl_camera_2d,
   zgl_log,
