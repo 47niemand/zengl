@@ -339,6 +339,7 @@ uses
   zgl_screen,
   zgl_window,
   zgl_render,
+  zgl_camera_2d,
   zgl_render_target,
   zgl_textures,
   zgl_log,
@@ -605,6 +606,9 @@ begin
         else
           glViewPort( Round( ScissorX / ( oglWidth / oglTargetW ) ), oglTargetH - Round( ( ScissorY + ScissorH ) / ( oglHeight / oglTargetH ) ),
                       Round( ScissorW / ( oglWidth / oglTargetW ) ), Round( ScissorH / ( oglHeight / oglTargetH ) ) );
+
+        if cam2d.Apply Then cam2d_Set( cam2d.Global );
+
         ScissorEnabled := TRUE;
       end;
 end;
