@@ -1415,8 +1415,8 @@ begin
     begin
       a.Left   := xoffset;
       a.Top    := yoffset;
-      a.Right  := xoffset + width - 1;
-      a.Bottom := yoffset + height - 1;
+      a.Right  := xoffset + width;
+      a.Bottom := yoffset + height;
       d3dTexArray[ RenderTexID ].Texture.LockRect( level, r, @a, 0 );
       d3d_FillTexture( pixels, r.pBits, width, height, d.Width * 4 );
       d3dTexArray[ RenderTexID ].Texture.UnlockRect( level );

@@ -29,7 +29,7 @@ uses
 
 const
   cs_ZenGL    = 'ZenGL 0.3 alpha';
-  cs_Date     = '2012.02.07';
+  cs_Date     = '2012.02.19';
   cv_major    = 0;
   cv_minor    = 3;
   cv_revision = 0;
@@ -44,23 +44,25 @@ const
   SYS_ACTIVATE           = $000007;
   SYS_CLOSE_QUERY        = $000008;
 
-  INPUT_MOUSE_MOVE       = $000040;
-  INPUT_MOUSE_PRESS      = $000041;
-  INPUT_MOUSE_RELEASE    = $000042;
-  INPUT_MOUSE_WHEEL      = $000043;
-  INPUT_KEY_PRESS        = $000050;
-  INPUT_KEY_RELEASE      = $000051;
-  INPUT_KEY_CHAR         = $000052;
+  INPUT_MOUSE_MOVE       = $000020;
+  INPUT_MOUSE_PRESS      = $000021;
+  INPUT_MOUSE_RELEASE    = $000022;
+  INPUT_MOUSE_WHEEL      = $000023;
+  INPUT_KEY_PRESS        = $000030;
+  INPUT_KEY_RELEASE      = $000031;
+  INPUT_KEY_CHAR         = $000032;
 
-  TEX_FORMAT_EXTENSION   = $000010;
-  TEX_FORMAT_FILE_LOADER = $000011;
-  TEX_FORMAT_MEM_LOADER  = $000012;
-  TEX_CURRENT_EFFECT     = $000013;
+  TEX_FORMAT_EXTENSION   = $000100;
+  TEX_FORMAT_FILE_LOADER = $000101;
+  TEX_FORMAT_MEM_LOADER  = $000102;
+  TEX_CURRENT_EFFECT     = $000103;
 
-  SND_FORMAT_EXTENSION   = $000020;
-  SND_FORMAT_FILE_LOADER = $000021;
-  SND_FORMAT_MEM_LOADER  = $000022;
-  SND_FORMAT_DECODER     = $000023;
+  SND_FORMAT_EXTENSION   = $000110;
+  SND_FORMAT_FILE_LOADER = $000111;
+  SND_FORMAT_MEM_LOADER  = $000112;
+  SND_FORMAT_DECODER     = $000113;
+
+  VIDEO_FORMAT_DECODER   = $000130;
 
   // zgl_Get
   ZENGL_VERSION           = 1;
@@ -163,6 +165,9 @@ uses
   {$ENDIF}
   {$IFDEF USE_SOUND}
   zgl_sound,
+  {$ENDIF}
+  {$IFDEF USE_VIDEO}
+  zgl_video,
   {$ENDIF}
   zgl_utils;
 
@@ -280,6 +285,16 @@ begin
   snd_Free();
   {$ENDIF}
 
+  {$IFDEF USE_VIDEO}
+  if managerVideo.Count.Items <> 0 Then
+    log_Add( 'Videos to free: ' + u_IntToStr( managerVideo.Count.Items ) );
+  while managerVideo.Count.Items > 0 do
+    begin
+      p := managerVideo.First.next;
+      video_Del( zglPVideoStream( p ) );
+    end;
+  {$ENDIF}
+
   scr_Destroy();
   if not appInitedToHandle Then wnd_Destroy();
   d3d_Destroy();
@@ -374,7 +389,7 @@ begin
     TEX_FORMAT_EXTENSION:
       begin
         SetLength( managerTexture.Formats, managerTexture.Count.Formats + 1 );
-        managerTexture.Formats[ managerTexture.Count.Formats ].Extension := u_StrUp( UTF8String( PAnsiChar( UserData ) ) );
+        managerTexture.Formats[ managerTexture.Count.Formats ].Extension := u_StrUp( PAnsiChar( UserData ) );
       end;
     TEX_FORMAT_FILE_LOADER:
       begin
@@ -395,7 +410,7 @@ begin
     SND_FORMAT_EXTENSION:
       begin
         SetLength( managerSound.Formats, managerSound.Count.Formats + 1 );
-        managerSound.Formats[ managerSound.Count.Formats ].Extension := u_StrUp( UTF8String( PAnsiChar( UserData ) ) );
+        managerSound.Formats[ managerSound.Count.Formats ].Extension := u_StrUp( PAnsiChar( UserData ) );
         managerSound.Formats[ managerSound.Count.Formats ].Decoder   := nil;
       end;
     SND_FORMAT_FILE_LOADER:
@@ -412,6 +427,15 @@ begin
         for i := 0 to managerSound.Count.Formats - 1 do
           if managerSound.Formats[ i ].Extension = zglPSoundDecoder( UserData ).Ext Then
             managerSound.Formats[ i ].Decoder := UserData;
+      end;
+    {$ENDIF}
+    // Video
+    {$IFDEF USE_VIDEO}
+    VIDEO_FORMAT_DECODER:
+      begin
+        SetLength( managerVideo.Decoders, managerVideo.Count.Decoders + 1 );
+        managerVideo.Decoders[ managerVideo.Count.Decoders ] := UserData;
+        INC( managerVideo.Count.Decoders );
       end;
     {$ENDIF}
   end;
