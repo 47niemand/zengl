@@ -52,6 +52,7 @@ uses
   {$IFDEF USE_TGA}
   zgl_textures_tga,
   {$ENDIF}
+
   zgl_render_target,
 
   {$IFDEF USE_SOUND}
@@ -64,11 +65,16 @@ uses
   {$ENDIF}
   {$ENDIF}
 
-  zgl_fx,
-  zgl_camera_2d,
+  {$IFDEF USE_VIDEO}
+  zgl_video,
+  zgl_video_theora,
+  {$ENDIF}
 
   zgl_render,
   zgl_render_2d,
+
+  zgl_fx,
+  zgl_camera_2d,
 
   zgl_font,
   zgl_text,
@@ -327,6 +333,14 @@ exports
   snd_PauseStream          name prefix + 'snd_PauseStream',
   snd_StopStream           name prefix + 'snd_StopStream',
   snd_ResumeStream         name prefix + 'snd_ResumeStream',
+  {$ENDIF}
+
+  // Video
+  {$IFDEF USE_VIDEO}
+  video_Add                name prefix + 'video_Add',
+  video_Del                name prefix + 'video_Del',
+  video_OpenFile           name prefix + 'video_OpenFile',
+  video_OpenMemory         name prefix + 'video_OpenMemory',
   {$ENDIF}
 
   // Math

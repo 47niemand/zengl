@@ -165,11 +165,33 @@ uses
   {$ENDIF}
   {$IFDEF USE_SOUND}
   zgl_sound,
+  {$IFDEF USE_OGG}
+  zgl_lib_ogg,
+  {$ENDIF}
   {$ENDIF}
   {$IFDEF USE_VIDEO}
   zgl_video,
+  {$IFDEF USE_THEORA}
+  zgl_lib_theora,
+  {$ENDIF}
   {$ENDIF}
   zgl_utils;
+
+procedure InitSoundVideo;
+begin
+  {$IFDEF USE_OGG}
+  if InitVorbis() Then
+    log_Add( 'Ogg: Initialized' )
+  else
+    log_Add( 'Ogg: Error while loading libraries: ' + libogg + ', ' + libvorbis + ', ' + libvorbisfile );
+  {$ENDIF}
+  {$IFDEF USE_THEORA}
+  if InitTheora() Then
+    log_Add( 'Theora: Initialized' )
+  else
+    log_Add( 'Theora: Error while loading library: ' + libtheoradec );
+  {$ENDIF}
+end;
 
 procedure zgl_Init( FSAA : Byte = 0; StencilBits : Byte = 0 );
 begin
@@ -186,6 +208,8 @@ begin
 
   if not wnd_Create( wndWidth, wndHeight ) Then exit;
   if not d3d_Create() Then exit;
+
+  InitSoundVideo();
 
   wnd_ShowCursor( appShowCursor );
   wnd_SetCaption( wndCaption );
@@ -210,6 +234,8 @@ begin
   wndHandle := Handle;
   //wndDC := GetDC( wnd_Handle );
   if not d3d_Create() Then exit;
+
+  InitSoundVideo();
 
   wnd_ShowCursor( appShowCursor );
   wnd_SetCaption( wndCaption );
@@ -298,6 +324,13 @@ begin
   scr_Destroy();
   if not appInitedToHandle Then wnd_Destroy();
   d3d_Destroy();
+
+  {$IFDEF USE_OGG}
+  FreeVorbis();
+  {$ENDIF}
+  {$IFDEF USE_THEORA}
+  FreeTheora();
+  {$ENDIF}
 
   appInitialized := FALSE;
 

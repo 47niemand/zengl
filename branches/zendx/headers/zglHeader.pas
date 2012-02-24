@@ -3,7 +3,7 @@
 {--------------------------------}
 {                                }
 { version:  0.3 alpha            }
-{ date:     2012.02.07           }
+{ date:     2012.02.24           }
 { license:  GNU LGPL version 3   }
 { homepage: http://zengl.org     }
 {                                }
@@ -111,23 +111,25 @@ const
   SYS_ACTIVATE           = $000007;
   SYS_CLOSE_QUERY        = $000008;
 
-  INPUT_MOUSE_MOVE       = $000040;
-  INPUT_MOUSE_PRESS      = $000041;
-  INPUT_MOUSE_RELEASE    = $000042;
-  INPUT_MOUSE_WHEEL      = $000043;
-  INPUT_KEY_PRESS        = $000050;
-  INPUT_KEY_RELEASE      = $000051;
-  INPUT_KEY_CHAR         = $000052;
+  INPUT_MOUSE_MOVE       = $000020;
+  INPUT_MOUSE_PRESS      = $000021;
+  INPUT_MOUSE_RELEASE    = $000022;
+  INPUT_MOUSE_WHEEL      = $000023;
+  INPUT_KEY_PRESS        = $000030;
+  INPUT_KEY_RELEASE      = $000031;
+  INPUT_KEY_CHAR         = $000032;
 
-  TEX_FORMAT_EXTENSION   = $000010;
-  TEX_FORMAT_FILE_LOADER = $000011;
-  TEX_FORMAT_MEM_LOADER  = $000012;
-  TEX_CURRENT_EFFECT     = $000013;
+  TEX_FORMAT_EXTENSION   = $000100;
+  TEX_FORMAT_FILE_LOADER = $000101;
+  TEX_FORMAT_MEM_LOADER  = $000102;
+  TEX_CURRENT_EFFECT     = $000103;
 
-  SND_FORMAT_EXTENSION   = $000020;
-  SND_FORMAT_FILE_LOADER = $000021;
-  SND_FORMAT_MEM_LOADER  = $000022;
-  SND_FORMAT_DECODER     = $000023;
+  SND_FORMAT_EXTENSION   = $000110;
+  SND_FORMAT_FILE_LOADER = $000111;
+  SND_FORMAT_MEM_LOADER  = $000112;
+  SND_FORMAT_DECODER     = $000113;
+
+  VIDEO_FORMAT_DECODER   = $000130;
 
 var
   zgl_Reg : procedure( What : LongWord; UserData : Pointer );
@@ -1170,6 +1172,63 @@ var
   snd_StopStream       : procedure( ID : Integer );
   snd_ResumeStream     : procedure( ID : Integer );
 
+// Video
+type
+  zglPVideoStream  = ^zglTVideoStream;
+  zglPVideoDecoder = ^zglTVideoDecoder;
+  zglPVideoManager = ^zglTVideoManager;
+
+  zglTVideoStream = record
+    _private   : record
+      Data    : Pointer;
+      File_   : zglTFile;
+      Memory  : zglTMemory;
+      Decoder : zglPVideoDecoder;
+               end;
+
+    Data       : Pointer;
+    Texture    : zglPTexture;
+    Frame      : Integer;
+    Time       : Double;
+
+    Info       : record
+      Width     : Word;
+      Height    : Word;
+      FrameRate : Single;
+      Duration  : Double;
+                end;
+
+    Loop       : Boolean;
+
+    prev, next : zglPVideoStream;
+  end;
+
+  zglTVideoDecoder = record
+    Extension : UTF8String;
+    Open      : function( var Stream : zglTVideoStream; const FileName : UTF8String ) : Boolean;
+    OpenMem   : function( var Stream : zglTVideoStream; const Memory : zglTMemory ) : Boolean;
+    Update    : procedure( var Stream : zglTVideoStream; Time : Double; var Data : Pointer );
+    Loop      : procedure( var Stream : zglTVideoStream );
+    Close     : procedure( var Stream : zglTVideoStream );
+  end;
+
+  zglTVideoManager = record
+    Count    : record
+      Items    : Integer;
+      Decoders : Integer;
+              end;
+    First    : zglTVideoStream;
+    Decoders : array of zglPVideoDecoder;
+  end;
+
+var
+  video_Add        : function : zglPVideoStream;
+  video_Del        : procedure( var Stream : zglPVideoStream );
+  video_OpenFile   : function( const FileName : UTF8String ) : zglPVideoStream;
+  video_OpenMemory : function( const Memory : zglTMemory; const Extension : UTF8String ) : zglPVideoStream;
+  video_Update     : procedure( var Stream : zglPVideoStream; Time : Double );
+
+
 // MATH
 const
   pi      = 3.141592654;
@@ -1675,6 +1734,12 @@ begin
       snd_PauseStream := dlsym( zglLib, 'snd_PauseStream' );
       snd_StopStream := dlsym( zglLib, 'snd_StopStream' );
       snd_ResumeStream := dlsym( zglLib, 'snd_ResumeStream' );
+
+      video_Add := dlsym( zglLib, 'video_Add' );
+      video_Del := dlsym( zglLib, 'video_Del' );
+      video_OpenFile := dlsym( zglLib, 'video_OpenFile' );
+      video_OpenMemory := dlsym( zglLib, 'video_OpenMemory' );
+      video_Update := dlsym( zglLib, 'video_Update' );
 
       m_Cos := dlsym( zglLib, 'm_Cos' );
       m_Sin := dlsym( zglLib, 'm_Sin' );
