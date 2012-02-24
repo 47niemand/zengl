@@ -95,6 +95,10 @@ uses
   {$ENDIF}
   zgl_utils;
 
+var
+  // workaround for resolution changng
+  d3dwrc : Boolean;
+
 procedure app_ZeroProc; begin end;
 procedure app_ZeroUpdate( dt : Double ); begin end;
 procedure app_ZeroActivate( activate : Boolean ); begin end;
@@ -205,6 +209,8 @@ begin
       TranslateMessage( m );
       DispatchMessageW( m );
     end;
+
+  d3dwrc := FALSE;
 end;
 
 function app_ProcessMessages( hWnd : HWND; Msg : UINT; wParam : WPARAM; lParam : LPARAM ) : LRESULT; stdcall;
@@ -232,7 +238,7 @@ begin
       end;
     WM_DISPLAYCHANGE:
       begin
-        if scrChanging Then
+        if scrChanging or d3dwrc Then
           begin
             scrChanging := FALSE;
             exit;
@@ -248,6 +254,7 @@ begin
         if appMinimized Then exit;
         if ( wParam > 0 ) and ( not appFocus ) Then
           begin
+            d3dwrc   := TRUE;
             appPause := FALSE;
             if appWork Then app_PActivate( TRUE );
             FillChar( keysDown[ 0 ], 256, 0 );
