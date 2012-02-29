@@ -34,8 +34,10 @@ uses
   zgl_utils
   ;
 
+{$IFNDEF USE_THEORA_STATIC}
 const
   libtheoradec  = 'libtheoradec-1.dll';
+{$ENDIF}
 
 type
   ppcchar = ^pcchar;
