@@ -83,6 +83,8 @@ uses
 
 var
   filePath : UTF8String = '';
+
+threadvar
   wideStr  : PWideChar;
 
 function GetDir( const Path : UTF8String ) : UTF8String;
