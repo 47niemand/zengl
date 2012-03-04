@@ -17,6 +17,7 @@ win32: clean
 	-Fu../../../lib/jpeg/i386-win32 \
 	-Fu../../../lib/msvcrt/i386 \
 	-Fu../../../lib/ogg/i386-win32 \
+	-Fu../../../lib/theora/i386-win32 \
 	-Fu../../../lib/zlib/i386-win32 \
 	-Fu../../../lib/zip/i386-win32 \
 	-FE$(OUTPUT)i386-win32/ -FU$(TMP) $(FLAGS) -o$(TARGETW) -TWIN32 -Pi386 -WG
@@ -27,6 +28,7 @@ win64: clean
 	-Fu../../../lib/jpeg/x86_64-win64 \
 	-Fu../../../lib/msvcrt/x86_64 \
 	-Fu../../../lib/ogg/x86_64-win64 \
+	-Fu../../../lib/theora/x86_64-win64 \
 	-Fu../../../lib/zlib/x86_64-win64 \
 	-Fu../../../lib/zip/x86_64-win64 \
 	-FE$(OUTPUT)x86_64-win64/ -FU$(TMP) $(FLAGS) -o$(TARGETW) -TWIN64 -Px86_64 -WG
