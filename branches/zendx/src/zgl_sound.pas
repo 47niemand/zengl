@@ -506,6 +506,8 @@ procedure snd_Del( var Sound : zglPSound );
 begin
   if not Assigned( Sound ) Then exit;
 
+  snd_Stop( Sound, SND_ALL );
+
 {$IFDEF USE_OPENAL}
   alDeleteBuffers( 1, @Sound.Buffer );
 {$ELSE}
