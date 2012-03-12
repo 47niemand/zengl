@@ -40,7 +40,7 @@ uses
   function msvcrt_pow( x, y : Double ) : Double; cdecl; public name 'pow';
   function msvcrt_ldexp( x : Double; exp : cint ) : Double; cdecl; public name 'ldexp';
   {$ENDIF}
-  function _memcmp( ptr1 : Pointer; ptr2 : Pointer; num : csize_t ) : cint; cdecl; public name '_memcmp';
+  function msvcrt_memcmp( ptr1 : Pointer; ptr2 : Pointer; num : csize_t ) : cint; cdecl; public name '_memcmp';
   {$ENDIF}
 
   {$ELSE}
@@ -122,7 +122,7 @@ begin
 end;
 {$ENDIF}
 
-function _memcmp( ptr1 : Pointer; ptr2 : Pointer; num : csize_t ) : cint; cdecl;
+function msvcrt_memcmp( ptr1 : Pointer; ptr2 : Pointer; num : csize_t ) : cint;
 begin
   Result := memcmp( ptr1, ptr2, num );
 end;
