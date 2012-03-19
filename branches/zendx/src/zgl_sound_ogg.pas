@@ -66,6 +66,11 @@ begin
   Result := 0;
 end;
 
+function ogg_CloseMem( datasource : pointer ) : cint; cdecl;
+begin
+  Result := 0;
+end;
+
 function ogg_GetPos( datasource : pointer ) : clong; cdecl;
 begin
   Result := file_GetPos( zglTFile( datasource^ ) );
@@ -134,6 +139,7 @@ begin
       FillChar( vc, SizeOf( vc ), 0 );
       vc.read  := @ogg_ReadMem;
       vc.seek  := @ogg_SeekMem;
+      vc.close := @ogg_CloseMem;
       vc.tell  := @ogg_GetPosMem;
       if ov_open_callbacks( @Stream._memory, vf, Pointer( Ptr( Memory.Memory ) + Memory.Position ), Memory.Size - Memory.Position, vc ) >= 0 Then
         begin
@@ -165,6 +171,13 @@ begin
 
   _End   := Result = 0;
   Result := bytesRead;
+end;
+
+procedure ogg_DecoderSeek( var Stream : zglTSoundStream; Milliseconds : Double );
+begin
+  if not vorbisInit Then exit;
+
+  ov_time_seek( zglTOggStream( Stream._data^ ).vf, Milliseconds / 1000 );
 end;
 
 procedure ogg_DecoderLoop( var Stream : zglTSoundStream );
@@ -253,6 +266,7 @@ initialization
   oggDecoder.Open    := ogg_DecoderOpen;
   oggDecoder.OpenMem := ogg_DecoderOpenMem;
   oggDecoder.Read    := ogg_DecoderRead;
+  oggDecoder.Seek    := ogg_DecoderSeek;
   oggDecoder.Loop    := ogg_DecoderLoop;
   oggDecoder.Close   := ogg_DecoderClose;
   zgl_Reg( SND_FORMAT_EXTENSION,   @OGG_EXTENSION[ 1 ] );
