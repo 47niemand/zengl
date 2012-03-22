@@ -34,6 +34,7 @@ uses
   {$IFDEF USE_ZIP}
   zgl_lib_zip,
   {$ENDIF}
+  zgl_threads,
   zgl_utils,
   zgl_types;
 
@@ -141,14 +142,11 @@ function  res_GetCompleted : Integer;
 var
   resUseThreaded     : Boolean;
   resCompleted       : Integer;
-  resThread          : array[ 0..255 ] of LongWord;
-  {$IFNDEF FPC}
-  resThreadID        : array[ 0..255 ] of LongWord;
-  {$ENDIF}
+  resThread          : array[ 0..255 ] of zglTThread;
   resQueueStackID    : array of Byte;
   resQueueID         : array[ 0..255 ] of Byte;
   resQueueCurrentID  : Byte;
-  resQueueState      : array[ 0..255 ] of {$IFDEF FPC} PRTLEvent {$ELSE} THandle {$ENDIF};
+  resQueueState      : array[ 0..255 ] of zglTEvent;
   resQueueSize       : array[ 0..255 ] of Integer;
   resQueueMax        : array[ 0..255 ] of Integer;
   resQueuePercentage : array[ 0..255 ] of Integer;
@@ -163,9 +161,6 @@ uses
   zgl_file,
   zgl_log;
 
-const
-  EVENT_STATE_NULL = {$IFDEF FPC} nil {$ELSE} 0 {$ENDIF};
-
 procedure res_Init;
 begin
 end;
@@ -175,15 +170,11 @@ procedure res_Free;
     i : Integer;
 begin
   for i := 0 to 255 do
-    if resQueueState[ i ] <> EVENT_STATE_NULL Then
+    if resQueueState[ i ] <> nil Then
       begin
-        {$IFDEF FPC}
-        RTLEventSetEvent( resQueueState[ i ] );
-        {$ELSE}
-        SetEvent( resQueueState[ i ] );
-        {$ENDIF}
+        thread_EventSet( resQueueState[ i ] );
         resQueueSize[ i ] := 0;
-        while resQueueState[ i ] <> EVENT_STATE_NULL do;
+        while resQueueState[ i ] <> nil do;
       end;
 end;
 
@@ -198,7 +189,7 @@ begin
   size := 0;
   max  := 0;
   for id := 0 to 255 do
-    if resQueueState[ id ] <> EVENT_STATE_NULL Then
+    if resQueueState[ id ] <> nil Then
       begin
         if resQueueSize[ id ] <= 0 Then continue;
 
@@ -262,13 +253,7 @@ begin
                       tex_GetData( Texture, tData );
                       tex_GetData( Mask, mData );
                       item.Prepared := TRUE;
-
-                      {$IFDEF FPC}
-                      RTLEventSetEvent( resQueueState[ id ] );
-                      {$ELSE}
-                      SetEvent( resQueueState[ id ] );
-                      {$ENDIF}
-
+                      thread_EventSet( resQueueState[ id ] );
                       break;
                     end;
                 RES_FONT:
@@ -278,13 +263,7 @@ begin
                         for i := 0 to Font.Count.Pages - 1 do
                           Font.Pages[ i ] := tex_Add();
                         item.Prepared := TRUE;
-
-                        {$IFDEF FPC}
-                        RTLEventSetEvent( resQueueState[ id ] );
-                        {$ELSE}
-                        SetEvent( resQueueState[ id ] );
-                        {$ENDIF}
-
+                        thread_EventSet( resQueueState[ id ] );
                         item.Ready := FALSE;
                       end;
               end;
@@ -437,11 +416,7 @@ begin
   item^.IsFromFile := FromFile;
   item^.Type_      := Type_;
 
-  {$IFDEF FPC}
-  RTLEventSetEvent( resQueueState[ resQueueCurrentID ] );
-  {$ELSE}
-  SetEvent( resQueueState[ resQueueCurrentID ] );
-  {$ENDIF}
+  thread_EventSet( resQueueState[ resQueueCurrentID ] );
 end;
 
 function res_ProcQueue( data : Pointer ) : LongInt;
@@ -715,37 +690,23 @@ begin
             end;
         end;
 
-      {$IFDEF FPC}
-      RTLEventWaitFor( resQueueState[ id ] );
-      {$ELSE}
-      WaitForSingleObject( resQueueState[ id ], INFINITE );
-      {$ENDIF}
+      thread_EventWait( resQueueState[ id ] );
+      thread_EventReset( resQueueState[ id ] );
     end;
 
-  {$IFDEF FPC}
-  RTLEventDestroy( resQueueState[ id ] );
-  {$ELSE}
-  CloseHandle( resQueueState[ id ] );
-  {$ENDIF}
-  resQueueState[ id ] := EVENT_STATE_NULL;
-
+  thread_EventDestroy( resQueueState[ id ] );
   EndThread( 0 );
 end;
 
 procedure res_BeginQueue( QueueID : Byte );
 begin
-  if resQueueState[ QueueID ] = EVENT_STATE_NULL Then
+  if resQueueState[ QueueID ] = nil Then
     begin
       resQueueID[ QueueID ]         := QueueID;
       resQueueItems[ QueueID ].prev := @resQueueItems[ QueueID ];
       resQueueItems[ QueueID ].next := nil;
-      {$IFDEF FPC}
-      resQueueState[ QueueID ] := RTLEventCreate();
-      resThread[ QueueID ]     := LongWord( BeginThread( @res_ProcQueue, @resQueueID[ QueueID ] ) );
-      {$ELSE}
-      resQueueState[ QueueID ] := CreateEvent( nil, TRUE, FALSE, nil );
-      resThread[ QueueID ]     := BeginThread( nil, 0, @res_ProcQueue, @resQueueID[ QueueID ], 0, resThreadID[ QueueID ] );
-      {$ENDIF}
+      thread_EventCreate( resQueueState[ QueueID ] );
+      thread_Create( resThread[ QueueID ], @res_ProcQueue, @resQueueID[ QueueID ] );
     end;
 
   SetLength( resQueueStackID, Length( resQueueStackID ) + 1 );

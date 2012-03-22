@@ -32,6 +32,7 @@ uses
   {$ELSE}
   zgl_sound_dsound,
   {$ENDIF}
+  zgl_threads,
   zgl_file,
   zgl_memory;
 
@@ -193,12 +194,10 @@ var
   sfLastPos     : array[ 1..SND_MAX ] of LongWord;
   {$ENDIF}
 
-  sfCS     : array[ 1..SND_MAX ] of TRTLCriticalSection;
-  sfThread : array[ 1..SND_MAX ] of LongWord;
-  sfEvent  : array[ 1..SND_MAX ] of {$IFDEF FPC} PRTLEvent {$ELSE} THandle {$ENDIF};
-  {$IFNDEF FPC}
-  sfThreadID : array[ 1..SND_MAX ] of LongWord;
-  {$ENDIF}
+  sfThread : array[ 1..SND_MAX ] of zglTThread;
+  sfCS     : array[ 1..SND_MAX ] of zglTCriticalSection;
+  sfEvent  : array[ 1..SND_MAX ] of zglTEvent;
+
 
 implementation
 uses
@@ -256,19 +255,21 @@ begin
   if not sndInitialized Then exit;
 
   for i := 1 to SND_MAX do
-    if GetStatusPlaying( sfSource[ i ] ) = 1 Then
-      begin
-        EnterCriticalSection( sfCS[ i ] );
-        if timer_GetTicks() - sfStream[ i ]._lastTime >= 10 Then
-          begin
-            sfStream[ i ]._complete := timer_GetTicks() - sfStream[ i ]._lastTime + sfStream[ i ]._complete;
-            if sfStream[ i ]._complete > sfStream[ i ].Length Then
-              sfStream[ i ]._complete := sfStream[ i ].Length;
-            sfStream[ i ]._lastTime := timer_GetTicks();
-          end;
-        LeaveCriticalsection( sfCS[ i ] );
-      end else
-        sfStream[ i ]._lastTime := timer_GetTicks();
+    begin
+      thread_CSEnter( sfCS[ i ] );
+      if GetStatusPlaying( sfSource[ i ] ) = 1 Then
+        begin
+          if timer_GetTicks() - sfStream[ i ]._lastTime >= 10 Then
+            begin
+              sfStream[ i ]._complete := timer_GetTicks() - sfStream[ i ]._lastTime + sfStream[ i ]._complete;
+              if sfStream[ i ]._complete > sfStream[ i ].Length Then
+                sfStream[ i ]._complete := sfStream[ i ].Length;
+              sfStream[ i ]._lastTime := timer_GetTicks();
+            end;
+        end else
+          sfStream[ i ]._lastTime := timer_GetTicks();
+      thread_CSLeave( sfCS[ i ] );
+    end;
 
   if appFocus Then
     begin
@@ -400,6 +401,9 @@ begin
   log_Add( 'DirectSound: sound system initialized' );
 {$ENDIF}
 
+  for i := 1 to SND_MAX do
+    thread_CSInit( sfCS[ i ] );
+
   sndInitialized := TRUE;
   Result         := TRUE;
 end;
@@ -422,7 +426,8 @@ begin
   for i := 1 to SND_MAX do
     begin
       snd_StopStream( i );
-      while sfEvent[ i ] <> EVENT_STATE_NULL do;
+      while sfEvent[ i ] <> nil do;
+      thread_EventDestroy( sfEvent[ i ] );
     end;
 
   for i := 1 to SND_MAX do
@@ -1053,6 +1058,7 @@ begin
 
   if ID = SND_STREAM Then
     begin
+      thread_CSEnter( sfCS[ What ] );
       case What of
         SND_STATE_PLAYING: Result := GetStatusPlaying( sfSource[ Ptr( Sound ) ] );
         SND_STATE_LOOPED: Result := Byte( sfStream[ Ptr( Sound ) ].Loop );
@@ -1060,6 +1066,7 @@ begin
         SND_STATE_PERCENT: Result := Round( 100 / sfStream[ Ptr( Sound ) ].Length * sfStream[ Ptr( Sound ) ]._complete );
         SND_INFO_LENGTH: Result := Round( sfStream[ Ptr( Sound ) ].Length );
       end;
+      thread_CSLeave( sfCS[ What ] );
     end else
       case What of
         SND_STATE_PLAYING: Result := GetStatusPlaying( Sound.Channel[ ID ].Source );
@@ -1073,7 +1080,7 @@ function snd_GetStreamID : Integer;
     i : Integer;
 begin
   for i := 1 to SND_MAX do
-    if ( not sfStream[ i ]._playing ) and ( sfEvent[ i ] = EVENT_STATE_NULL ) Then
+    if ( not sfStream[ i ]._playing ) and ( sfEvent[ i ] = nil ) Then
       begin
         Result := i;
         exit;
@@ -1152,15 +1159,8 @@ begin
   sfStream[ ID ]._complete := 0;
   sfStream[ ID ]._lastTime := timer_GetTicks;
 
-{$IFDEF FPC}
-  InitCriticalSection( sfCS[ ID ] );
-  sfEvent[ ID ]  := RTLEventCreate();
-  sfThread[ ID ] := LongWord( BeginThread( @snd_ProcStream, @sfStream[ ID ].ID ) );
-{$ELSE}
-  InitializeCriticalSection( sfCS[ ID ] );
-  sfEvent[ ID ]  := CreateEvent( nil, FALSE, FALSE, nil );
-  sfThread[ ID ] := BeginThread( nil, 0, @snd_ProcStream, @sfStream[ ID ].ID, 0, sfThreadID[ ID ] );
-{$ENDIF}
+  thread_EventCreate( sfEvent[ ID ] );
+  thread_Create( sfThread[ ID ], @snd_ProcStream, @sfStream[ ID ].ID );
 end;
 
 function snd_PlayFile( const FileName : UTF8String; Loop : Boolean = FALSE; Volume : Single = SND_VOLUME_DEFAULT ) : Integer;
@@ -1263,11 +1263,8 @@ begin
 {$ELSE}
   sfSource[ ID ].Stop();
 {$ENDIF}
-{$IFDEF FPC}
-  RTLEventSetEvent( sfEvent[ ID ] );
-{$ELSE}
-  SetEvent( sfEvent[ ID ] );
-{$ENDIF}
+
+  thread_EventSet( sfEvent[ ID ] );
 end;
 
 procedure snd_ResumeStream( ID : Integer );
@@ -1287,17 +1284,10 @@ procedure snd_SeekStream( ID : Integer; Milliseconds : Double );
 begin
   if ( not sndInitialized ) or ( not Assigned( sfStream[ ID ]._decoder ) ) Then exit;
 
-  EnterCriticalsection( sfCS[ ID ] );
-
+  thread_CSEnter( sfCS[ ID ] );
   sfSeek[ ID ] := Milliseconds;
-
-{$IFDEF FPC}
-  RTLEventSetEvent( sfEvent[ ID ] );
-{$ELSE}
-  SetEvent( sfEvent[ ID ] );
-{$ENDIF}
-
-  LeaveCriticalsection( sfCS[ ID ] );
+  thread_EventSet( sfEvent[ ID ] );
+  thread_CSLeave( sfCS[ ID ] );
 end;
 
 function snd_ProcStream( data : Pointer ) : LongInt;
@@ -1318,24 +1308,15 @@ begin
   Result := 0;
   id := PInteger( data )^;
 
-{$IFDEF USE_OPENAL}
-  processed := 0;
-  while ( processed < 1 ) and sfStream[ id ]._playing do
-    alGetSourcei( sfSource[ id ], AL_BUFFERS_PROCESSED, processed );
-{$ENDIF}
   while sfStream[ id ]._playing do
     begin
       if not sndInitialized Then break;
 
-      {$IFDEF FPC}
-      RTLEventWaitFor( sfEvent[ id ], 100 );
-      {$ELSE}
-      WaitForSingleObject( sfEvent[ id ], 100 );
-      {$ENDIF}
-
+      thread_EventWait( sfEvent[ id ], 100 );
+      thread_EventReset( sfEvent[ id ] );
       while ( sfStream[ id ]._playing ) and ( sfStream[ id ]._paused ) do u_Sleep( 10 );
 
-      EnterCriticalsection( sfCS[ id ] );
+      thread_CSEnter( sfCS[ id ] );
       if sfSeek[ id ] > 0 Then
         begin
           sfStream[ id ]._decoder.Seek( sfStream[ id ], sfSeek[ id ] );
@@ -1369,12 +1350,8 @@ begin
 
           sfStream[ id ]._complete := sfSeek[ id ];
           sfStream[ id ]._lastTime := timer_GetTicks();
-
-          {$IFDEF FPC}
-          RTLEventResetEvent( sfEvent[ id ] );
-          {$ENDIF}
         end;
-      LeaveCriticalsection( sfCS[ id ] );
+      thread_CSLeave( sfCS[ id ] );
 
       {$IFDEF USE_OPENAL}
       alGetSourcei( sfSource[ id ], AL_BUFFERS_PROCESSED, processed );
@@ -1440,15 +1417,7 @@ begin
         end;
     end;
 
-{$IFDEF FPC}
-  DoneCriticalsection( sfCS[ id ] );
-  RTLEventDestroy( sfEvent[ id ] );
-{$ELSE}
-  DeleteCriticalSection( sfCS[ id ] );
-  CloseHandle( sfEvent[ id ] );
-{$ENDIF}
-  sfEvent[ id ] := EVENT_STATE_NULL;
-
+  thread_EventDestroy( sfEvent[ id ] );
   EndThread( 0 );
 end;
 
