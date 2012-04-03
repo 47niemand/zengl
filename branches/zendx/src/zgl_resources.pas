@@ -70,7 +70,7 @@ type
     Texture          : zglPTexture;
     FileLoader       : zglTTextureFileLoader;
     MemLoader        : zglTTextureMemLoader;
-    pData            : Pointer;
+    pData            : PByteArray;
     TransparentColor : LongWord;
     Flags            : LongWord;
     Format           : Word;
@@ -90,8 +90,8 @@ type
   zglTTextureMaskResource = record
     Texture : zglPTexture;
     Mask    : zglPTexture;
-    tData   : Pointer;
-    mData   : Pointer;
+    tData   : PByteArray;
+    mData   : PByteArray;
   end;
 
 type
@@ -100,7 +100,7 @@ type
     FileName : UTF8String;
     Memory   : zglTMemory;
     Font     : zglPFont;
-    pData    : array of Pointer;
+    pData    : array of PByteArray;
     Format   : array of Word;
     Width    : array of Word;
     Height   : array of Word;
@@ -140,8 +140,17 @@ function  res_GetPercentage( QueueID : Byte ) : Integer;
 function  res_GetCompleted : Integer;
 
 var
-  resUseThreaded     : Boolean;
-  resCompleted       : Integer;
+  resUseThreaded : Boolean;
+  resCompleted   : Integer;
+
+implementation
+uses
+  zgl_main,
+  zgl_application,
+  zgl_file,
+  zgl_log;
+
+var
   resThread          : array[ 0..255 ] of zglTThread;
   resQueueStackID    : array of Byte;
   resQueueID         : array[ 0..255 ] of Byte;
@@ -151,15 +160,6 @@ var
   resQueueMax        : array[ 0..255 ] of Integer;
   resQueuePercentage : array[ 0..255 ] of Integer;
   resQueueItems      : array[ 0..255 ] of zglTResourceItem;
-
-implementation
-uses
-  zgl_main,
-  zgl_window,
-  zgl_screen,
-  zgl_application,
-  zgl_file,
-  zgl_log;
 
 procedure res_Init;
 begin
@@ -520,7 +520,7 @@ begin
                       for j := 0 to Texture.Height - 1 do
                         begin
                           for i := 0 to Texture.Width - 1 do
-                            PByte( Ptr( tData ) + i * 4 + 3 )^ := PByte( Ptr( mData ) + i * 4 )^;
+                            tData[ i * 4 + 3 ] := mData[ i * 4 ];
                           INC( PByte( tData ), rW * 4 );
                           INC( PByte( mData ), mW * 4 );
                         end;
@@ -564,7 +564,7 @@ begin
                                       if file_Exists( tmp ) Then
                                         begin
                                           managerTexture.Formats[ j ].FileLoader( tmp, pData[ i ], Width[ i ], Height[ i ], Format[ i ] );
-                                          log_ADd( 'Texture loaded: "' + tmp + '"'  );
+                                          log_Add( 'Texture loaded: "' + tmp + '"'  );
                                           break;
                                         end;
                                     end;

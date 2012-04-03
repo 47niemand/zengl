@@ -51,8 +51,7 @@ unit zgl_lib_ogg;
 interface
 uses
   zgl_lib_msvcrt,
-  zgl_types,
-  zgl_utils
+  zgl_types
   ;
 
 const
@@ -264,7 +263,7 @@ type
   function ogg_page_serialno(og: pogg_page): cint; cdecl; external;
 
   function ov_clear(var vf: OggVorbis_File): cint; cdecl; external;
-  function ov_open_callbacks(datasource: pointer; var vf: OggVorbis_File; initial: pointer; ibytes: clong; callbacks: ov_callbacks): cint; cdecl; external;
+  function ov_open_callbacks(datasource: pointer; out vf: OggVorbis_File; initial: pointer; ibytes: clong; callbacks: ov_callbacks): cint; cdecl; external;
   function ov_info(var vf: OggVorbis_File; link: cint): pvorbis_info; cdecl; external;
   function ov_read(var vf: OggVorbis_File; buffer: pointer; length: cint; bigendianp: cbool; word: cint; sgned: cbool; bitstream: pcint): clong; cdecl; external;
   function ov_pcm_seek(var vf: OggVorbis_File; pos: cint64): cint; cdecl; external;
@@ -287,7 +286,7 @@ type
     ogg_page_serialno     : function(og: pogg_page): cint; cdecl;
 
     ov_clear          : function(var vf: OggVorbis_File): cint; cdecl;
-    ov_open_callbacks : function(datasource: pointer; var vf: OggVorbis_File; initial: pointer; ibytes: clong; callbacks: ov_callbacks): cint; cdecl;
+    ov_open_callbacks : function(datasource: pointer; out vf: OggVorbis_File; initial: pointer; ibytes: clong; callbacks: ov_callbacks): cint; cdecl;
     ov_info           : function(var vf: OggVorbis_File; link: cint): pvorbis_info; cdecl;
     ov_read           : function(var vf: OggVorbis_File; buffer: pointer; length: cint; bigendianp: cbool; word: cint; sgned: cbool; bitstream: pcint): clong; cdecl;
     ov_pcm_seek       : function(var vf: OggVorbis_File; pos: cint64): cint; cdecl;
@@ -306,6 +305,10 @@ var
   vorbisInit : Boolean;
 
 implementation
+{$IFNDEF USE_OGG_STATIC}
+uses
+  zgl_utils;
+{$ENDIF}
 
 {$IFNDEF USE_OGG_STATIC}
 var

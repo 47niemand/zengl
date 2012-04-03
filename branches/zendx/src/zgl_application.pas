@@ -32,14 +32,9 @@ uses
 
 procedure app_Init;
 procedure app_MainLoop;
+function  app_CloseQuery : Boolean;
 procedure app_ProcessOS;
 function  app_ProcessMessages( hWnd : HWND; Msg : UINT; wParam : WPARAM; lParam : LPARAM ) : LRESULT; stdcall;
-procedure app_CalcFPS;
-
-procedure app_ZeroProc;
-procedure app_ZeroUpdate( dt : Double );
-procedure app_ZeroActivate( activate : Boolean );
-function  app_ZeroCloseQuery : Boolean;
 
 var
   appInitialized    : Boolean;
@@ -99,16 +94,12 @@ var
   // workaround for resolution changng
   d3dwrc : Boolean;
 
-procedure app_ZeroProc; begin end;
-procedure app_ZeroUpdate( dt : Double ); begin end;
-procedure app_ZeroActivate( activate : Boolean ); begin end;
-function  app_ZeroCloseQuery : Boolean; begin Result := TRUE; end;
-
 procedure app_Draw;
 begin
   SetCurrentMode();
   scr_Clear();
-  app_PDraw();
+  if Assigned( app_PDraw ) Then
+    app_PDraw();
   scr_Flush();
   if not appPause Then
     INC( appFPSCount );
@@ -126,7 +117,8 @@ procedure app_Init;
 begin
   SetCurrentMode();
   scr_Clear();
-  app_PLoad();
+  if Assigned( app_PLoad ) Then
+    app_PLoad();
   scr_Flush();
 
   res_Init();
@@ -165,14 +157,20 @@ begin
 
       t := timer_GetTicks();
       // Workaround for bug with unstable time between frames...
-      if ( scrVSync ) and ( appFPS > 0 ) and ( appFPS = scrRefresh ) and ( appFlags and APP_USE_DT_CORRECTION > 0 ) Then
+      if Assigned( app_PUpdate ) and ( scrVSync ) and ( appFPS > 0 ) and ( appFPS = scrRefresh ) and ( appFlags and APP_USE_DT_CORRECTION > 0 ) Then
         app_PUpdate( 1000 / appFPS )
       else
-      app_PUpdate( timer_GetTicks() - appdt );
+        if Assigned( app_PUpdate ) Then
+          app_PUpdate( timer_GetTicks() - appdt );
       appdt := t;
 
       app_Draw();
     end;
+end;
+
+function  app_CloseQuery : Boolean;
+begin
+  Result := TRUE;
 end;
 
 procedure app_ProcessOS;
@@ -191,10 +189,19 @@ begin
         mouseY := cursorpos.Y - wndY - wndBrdSizeY - wndCpnSize;
       end;
 
-  mouseDX := Round( ( mouseX - wndWidth div 2 ) / scrResCX );
-  mouseDY := Round( ( mouseY - wndHeight div 2 ) / scrResCY );
-  mouseX  := Round( ( mouseX - scrAddCX ) / scrResCX );
-  mouseY  := Round( ( mouseY - scrAddCY ) / scrResCY );
+  if appFlags and CORRECT_RESOLUTION > 0 Then
+    begin
+      mouseDX := Round( ( mouseX - wndWidth div 2 - scrAddCX ) / scrResCX );
+      mouseDY := Round( ( mouseY - wndHeight div 2 - scrAddCY ) / scrResCY );
+      mouseX  := Round( ( mouseX - scrAddCX ) / scrResCX );
+      mouseY  := Round( ( mouseY - scrAddCY ) / scrResCY );
+    end else
+      begin
+        mouseDX := mouseX - wndWidth div 2;
+        mouseDY := mouseY - wndHeight div 2;
+        mouseX  := mouseX;
+        mouseY  := mouseY;
+      end;
   if ( mouseLX <> mouseX ) or ( mouseLY <> mouseY ) Then
     begin
       mouseLX := mouseX;
@@ -256,7 +263,8 @@ begin
           begin
             d3dwrc   := TRUE;
             appPause := FALSE;
-            if appWork Then app_PActivate( TRUE );
+            if appWork and Assigned( app_PActivate ) Then
+              app_PActivate( TRUE );
             FillChar( keysDown[ 0 ], 256, 0 );
             key_ClearState();
             FillChar( mouseDown[ 0 ], 3, 0 );
@@ -265,7 +273,8 @@ begin
             if ( wParam = 0 ) and ( appFocus ) Then
               begin
                 if appAutoPause Then appPause := TRUE;
-                if appWork Then app_PActivate( FALSE );
+                if appWork and Assigned( app_PActivate ) Then
+                  app_PActivate( FALSE );
               end;
         appFocus := wParam > 0;
       end;
@@ -484,14 +493,9 @@ begin
 end;
 
 initialization
-  app_PInit       := app_Init;
-  app_PLoop       := app_MainLoop;
-  app_PLoad       := app_ZeroProc;
-  app_PDraw       := app_ZeroProc;
-  app_PExit       := app_ZeroProc;
-  app_PUpdate     := app_ZeroUpdate;
-  app_PActivate   := app_ZeroActivate;
-  app_PCloseQuery := app_ZeroCloseQuery;
+  app_PInit       := @app_Init;
+  app_PLoop       := @app_MainLoop;
+  app_PCloseQuery := @app_CloseQuery;
 
   appFlags := WND_USE_AUTOCENTER or APP_USE_LOG or COLOR_BUFFER_CLEAR or CLIP_INVISIBLE or APP_USE_DT_CORRECTION;
 

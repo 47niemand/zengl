@@ -164,8 +164,8 @@ procedure key_ClearState;
 procedure key_InputText( const Text : UTF8String );
 function  scancode_to_utf8( ScanCode : Byte ) : Byte;
 function  winkey_to_scancode( WinKey : Integer ) : Byte;
-function  SCA( KeyCode : DWORD ) : DWORD;
-procedure DoKeyPress( KeyCode : DWORD );
+function  SCA( KeyCode : LongWord ) : LongWord;
+procedure doKeyPress( KeyCode : LongWord );
 
 function _key_GetText : PAnsiChar;
 
@@ -251,34 +251,6 @@ begin
   keysLast[ KA_UP   ] := 0;
 end;
 
-procedure key_InputText( const Text : UTF8String );
-  var
-    c : AnsiChar;
-begin
-  if ( u_Length( keysText ) < keysMax ) or ( keysMax = -1 ) Then
-    begin
-      if ( appFlags and APP_USE_ENGLISH_INPUT > 0 ) and ( Text[ 1 ] <> ' ' )  Then
-        begin
-          c := AnsiChar( scancode_to_utf8( keysLast[ 0 ] ) );
-          if c <> #0 Then
-            keysText := keysText + UTF8String( c );
-        end else
-          keysText := keysText + Text;
-    end;
-
-  if Assigned( key_PInputChar ) Then
-    begin
-      if ( appFlags and APP_USE_ENGLISH_INPUT > 0 ) and ( Text[ 1 ] <> ' ' )  Then
-        begin
-          c := AnsiChar( scancode_to_utf8( keysLast[ 0 ] ) );
-          if c <> #0 Then
-            key_PInputChar( c );
-        end else
-          key_PInputChar( Text );
-    end;
-end;
-
-// Костыли мои костыли :)
 function scancode_to_utf8( ScanCode : Byte ) : Byte;
 begin
   Result := 0;
@@ -375,6 +347,33 @@ begin
     end;
 end;
 
+procedure key_InputText( const Text : UTF8String );
+  var
+    c : AnsiChar;
+begin
+  if ( u_Length( keysText ) < keysMax ) or ( keysMax = -1 ) Then
+    begin
+      if ( appFlags and APP_USE_ENGLISH_INPUT > 0 ) and ( Text[ 1 ] <> ' ' )  Then
+        begin
+          c := AnsiChar( scancode_to_utf8( keysLast[ 0 ] ) );
+          if c <> #0 Then
+            keysText := keysText + UTF8String( c );
+        end else
+          keysText := keysText + Text;
+    end;
+
+  if Assigned( key_PInputChar ) Then
+    begin
+      if ( appFlags and APP_USE_ENGLISH_INPUT > 0 ) and ( Text[ 1 ] <> ' ' )  Then
+        begin
+          c := AnsiChar( scancode_to_utf8( keysLast[ 0 ] ) );
+          if c <> #0 Then
+            key_PInputChar( c );
+        end else
+          key_PInputChar( Text );
+    end;
+end;
+
 function winkey_to_scancode( WinKey : Integer ) : Byte;
 begin
   case WinKey of
@@ -394,7 +393,7 @@ begin
   end;
 end;
 
-function SCA( KeyCode : DWORD ) : DWORD;
+function SCA( KeyCode : LongWord ) : LongWord;
 begin
   Result := KeyCode;
   if ( KeyCode = K_SUPER_L ) or ( KeyCode = K_SUPER_R ) Then Result := K_SUPER;
@@ -403,7 +402,7 @@ begin
   if ( KeyCode = K_ALT_L ) or ( KeyCode = K_ALT_R ) Then Result := K_ALT;
 end;
 
-procedure doKeyPress( KeyCode : DWORD );
+procedure doKeyPress( KeyCode : LongWord );
 begin
   if keysCanPress[ KeyCode ] Then
     begin

@@ -26,18 +26,18 @@ interface
 uses
   zgl_lib_msvcrt,
   zgl_lib_zip,
+  zgl_types,
   zgl_memory;
 
 const
   PNG_EXTENSION : UTF8String = 'PNG';
 
-procedure png_LoadFromFile( const FileName : UTF8String; var Data : Pointer; var W, H, Format : Word );
-procedure png_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
+procedure png_LoadFromFile( const FileName : UTF8String; out Data : PByteArray; out W, H, Format : Word );
+procedure png_LoadFromMemory( const Memory : zglTMemory; out Data : PByteArray; out W, H, Format : Word );
 
 implementation
 uses
   zgl_main,
-  zgl_types,
   zgl_file,
   zgl_log,
   zgl_textures;
@@ -66,7 +66,6 @@ const
 type
   zglTPNGChunkName = array[ 0..3 ] of AnsiChar;
 
-  zglPPNGChunk = ^zglTPNGChunk;
   zglTPNGChunk = record
     Name : zglTPNGChunkName;
     Size : Integer;
@@ -87,7 +86,7 @@ type
     R, G, B, A : Byte;
   end;
 
-procedure png_GetPixelInfo( var pngHeader : zglTPNGHeader; var pngRowSize, pngOffset : LongWord );
+procedure png_GetPixelInfo( var pngHeader : zglTPNGHeader; out pngRowSize, pngOffset : LongWord );
 begin
   case pngHeader.ColorType of
     PNG_COLOR_GRAYSCALE:
@@ -155,7 +154,7 @@ begin
 
   for i := 0 to Width - 1 do
     begin
-      ByteData := PByteArray( Src )^[ i div N ];
+      ByteData := PByteArray( Src )[ i div N ];
 
       if pngBitDepth < 8 Then
         begin
@@ -194,7 +193,7 @@ end;
 
 procedure png_FilterRow( var pngRowBuffer : PByteArray; var pngRowBufferPrev : PByteArray; pngRowSize, pngOffset : LongWord );
   var
-    i                          : Integer;
+    i                          : LongWord;
     Paeth                      : Integer;
     PP, Left, Above, AboveLeft : Integer;
 
@@ -262,7 +261,7 @@ begin
   end;
 end;
 
-function png_ReadIHDR( var pngMem : zglTMemory; var pngHeader : zglTPNGheader; var Data : Pointer; Size : Integer ) : Boolean;
+function png_ReadIHDR( var pngMem : zglTMemory; out pngHeader : zglTPNGheader; out Data : PByteArray; Size : Integer ) : Boolean;
   var
     i : Integer;
 begin
@@ -315,7 +314,7 @@ begin
   mem_Read( pngMem, pngPalette[ 0 ], Size );
 end;
 
-function png_ReadIDAT( var pngMem : zglTMemory; pngHeader : zglTPNGHeader; var Data : Pointer; Size : Integer ) : Boolean;
+function png_ReadIDAT( var pngMem : zglTMemory; pngHeader : zglTPNGHeader; var Data : PByteArray; Size : Integer ) : Boolean;
   var
     i            : Cardinal;
     CopyP        : procedure( Src, Dest : PByte; Width : Integer );
@@ -363,7 +362,7 @@ begin
 
         png_FilterRow( pngRowBuffer[ pngRowUsed ], pngRowBuffer[ not pngRowUsed ], pngRowSize, pngOffset );
 
-        CopyP( @pngRowBuffer[ pngRowUsed ][ 1 ], Pointer( Ptr( Data ) + pngHeader.Width * 4 * ( i - 1 ) ), pngHeader.Width );
+        CopyP( @pngRowBuffer[ pngRowUsed ][ 1 ], @Data[ pngHeader.Width * 4 * ( i - 1 ) ], pngHeader.Width );
 
         pngRowUsed := not pngRowUsed;
       end;
@@ -380,7 +379,7 @@ begin
   pngHastRNS := TRUE;
 end;
 
-procedure png_LoadFromFile( const FileName : UTF8String; var Data : Pointer; var W, H, Format : Word );
+procedure png_LoadFromFile( const FileName : UTF8String; out Data : PByteArray; out W, H, Format : Word );
   var
     pngMem : zglTMemory;
 begin
@@ -389,7 +388,7 @@ begin
   mem_Free( pngMem );
 end;
 
-procedure png_LoadFromMemory( const Memory : zglTMemory; var Data : Pointer; var W, H, Format : Word );
+procedure png_LoadFromMemory( const Memory : zglTMemory; out Data : PByteArray; out W, H, Format : Word );
   label _exit;
   var
     pngMem          : zglTMemory;

@@ -24,8 +24,6 @@ unit zgl_render_2d;
 
 interface
 uses
-  zgl_direct3d,
-  zgl_direct3d_all,
   zgl_textures;
 
 procedure batch2d_Begin;
@@ -60,7 +58,8 @@ var
 
 implementation
 uses
-  zgl_screen,
+  zgl_direct3d,
+  zgl_direct3d_all,
   zgl_fx,
   zgl_camera_2d,
   zgl_primitives_2d;

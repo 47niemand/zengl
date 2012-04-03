@@ -10,7 +10,6 @@
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
-      <Title Value="ZenGL"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
@@ -18,7 +17,7 @@
       <UseVersionInfo Value="True"/>
       <MinorVersionNr Value="3"/>
       <CharSet Value="04B0"/>
-      <StringTable CompanyName="Kemka Andrey aka Andru" ProductName="ZenGL" InternalName="ZenGL" LegalCopyright="Kemka Andrey aka Andru" ProductVersion="0.3" FileDescription="Cross-platform game development library" OriginalFilename="ZenGL"/>
+      <StringTable CompanyName="Kemka Andrey aka Andru" FileDescription="Cross-platform game development library" InternalName="ZenGL" LegalCopyright="Kemka Andrey aka Andru" OriginalFilename="ZenGL" ProductName="ZenGL" ProductVersion="0.3.0"/>
     </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="default" Default="True"/>
@@ -35,7 +34,7 @@
         <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <Units Count="50">
+    <Units Count="52">
       <Unit0>
         <Filename Value="../ZenGL.pas"/>
         <IsPartOfProject Value="True"/>
@@ -284,16 +283,26 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="zgl_lib_theora"/>
       </Unit49>
+      <Unit50>
+        <Filename Value="../zgl_threads.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_threads"/>
+      </Unit50>
+      <Unit51>
+        <Filename Value="../zgl_tiles_2d.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="zgl_tiles_2d"/>
+      </Unit51>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
-    <Version Value="11"/>
+    <Version Value="9"/>
     <Target>
-      <Filename Value="./ZenGL"/>
+      <Filename Value="./ZenGL.dll"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..;../Direct3D;../../lib/jpeg/$(TargetCPU)-$(TargetOS);../../lib/msvcrt/$(TargetCPU);../../lib/ogg/$(TargetCPU)-$(TargetOS);../../lib/theora/$(TargetCPU)-$(TargetOS);../../lib/zlib/$(TargetCPU)-$(TargetOS);../../lib/zip/$(TargetCPU)-$(TargetOS)"/>
+      <OtherUnitFiles Value="../Direct3D;../../lib/jpeg/$(TargetCPU)-$(TargetOS);../../lib/msvcrt/$(TargetCPU);../../lib/ogg/$(TargetCPU)-$(TargetOS);../../lib/theora/$(TargetCPU)-$(TargetOS);../../lib/zlib/$(TargetCPU)-$(TargetOS);../../lib/zip/$(TargetCPU)-$(TargetOS)"/>
       <UnitOutputDirectory Value="../tmp"/>
     </SearchPaths>
     <Parsing>
@@ -306,15 +315,12 @@
     </Parsing>
     <CodeGeneration>
       <SmartLinkUnit Value="True"/>
-      <TargetCPU Value="i386"/>
-      <TargetOS Value="win32"/>
       <Optimizations>
         <OptimizationLevel Value="3"/>
       </Optimizations>
     </CodeGeneration>
     <Linking>
       <Debugging>
-        <GenerateDebugInfo Value="False"/>
         <UseLineInfoUnit Value="False"/>
         <StripSymbols Value="True"/>
       </Debugging>
@@ -328,9 +334,7 @@
     </Linking>
     <Other>
       <Verbosity>
-        <ShowNotes Value="False"/>
-        <ShowHints Value="False"/>
-        <ShowGenInfo Value="False"/>
+        <ShowSummary Value="True"/>
       </Verbosity>
       <CompilerMessages>
         <UseMsgFile Value="True"/>

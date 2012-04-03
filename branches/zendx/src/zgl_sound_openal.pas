@@ -96,7 +96,7 @@ var
   alSourcei              : procedure(sid: LongWord; param: LongInt; value: LongInt); cdecl;
   alSourcef              : procedure(sid: LongWord; param: LongInt; value: Single); cdecl;
   alSourcefv             : procedure(sid: LongWord; param: LongInt; const values: PSingle); cdecl;
-  alGetSourcei           : procedure(sid: LongWord; param: LongInt; var value: LongInt); cdecl;
+  alGetSourcei           : procedure(sid: LongWord; param: LongInt; out value: LongInt); cdecl;
   alSourcePlay           : procedure(sid: LongWord); cdecl;
   alSourcePause          : procedure(sid: LongWord); cdecl;
   alSourceStop           : procedure(sid: LongWord); cdecl;
@@ -115,12 +115,10 @@ var
   oalSrcPtrs  : array of Pointer;
   oalSrcState : array of LongWord;
 
-  // Параметры слушателя
-  oalPosition    : array[ 0..2 ] of Single = ( 0.0, 0.0, 0.0);  //позиция
-  oalVelocity    : array[ 0..2 ] of Single = ( 0.0, 0.0, 0.0 ); //движение
-  oalOrientation : array[ 0..5 ] of Single = ( 0.0, 0.0, -1.0, 0.0, 1.0, 0.0 ); //ориентация
+  oalPosition    : array[ 0..2 ] of Single = ( 0.0, 0.0, 0.0);
+  oalVelocity    : array[ 0..2 ] of Single = ( 0.0, 0.0, 0.0 );
+  oalOrientation : array[ 0..5 ] of Single = ( 0.0, 0.0, -1.0, 0.0, 1.0, 0.0 );
 
-  // Форматы звука для количества каналов
   oalFormat  : array[ 1..2 ] of LongInt = ( AL_FORMAT_MONO16, AL_FORMAT_STEREO16 );
 
 implementation

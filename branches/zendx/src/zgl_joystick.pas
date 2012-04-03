@@ -23,8 +23,6 @@ unit zgl_joystick;
 {$I zgl_config.cfg}
 
 interface
-uses
-  Windows;
 
   type
     PJOYCAPSW = ^TJOYCAPSW;
@@ -164,7 +162,6 @@ procedure joy_ClearState;
 
 implementation
 uses
-  zgl_types,
   zgl_log,
   zgl_math_2d,
   zgl_utils;
@@ -179,8 +176,6 @@ function joy_Init : Byte;
     axis : Integer;
     caps : PLongWord;
 begin
-  Result := 0;
-
   j := joyGetNumDevs();
   for i := 0 to j - 1 do
     if joyGetDevCapsW( i, @joyArray[ i ].caps, SizeOf( TJOYCAPSW ) ) = 0 Then
@@ -215,7 +210,7 @@ begin
           begin
             caps^ := caps^ or JOY_HAS_V;
             joyArray[ i ].axesMap[ axis ] := JOY_AXIS_V;
-            INC( axis );
+            //INC( axis );
           end;
         if joyArray[ i ].caps.wCaps and JOYCAPS_HASPOV > 0 Then
           begin
@@ -260,7 +255,7 @@ begin
         begin
           for j := 0 to joyArray[ i ].Info.Count.Axes - 1 do
             begin
-              // Скажем "нет" if'ам, и сделаем все хитрожопо :)
+              // Say "no" to if's, and do everything trciky :)
               a     := joyArray[ i ].axesMap[ j ];
               pcaps := @joyArray[ i ].caps;
               INC( pcaps, JS_AXIS[ a ] );

@@ -36,7 +36,6 @@ procedure wnd_SetCaption( const NewCaption : UTF8String );
 procedure wnd_SetSize( Width, Height : Integer );
 procedure wnd_SetPos( X, Y : Integer );
 procedure wnd_ShowCursor( Show : Boolean );
-procedure wnd_Select;
 
 var
   wndX          : Integer;
@@ -70,8 +69,16 @@ uses
 function LoadCursorW(hInstance: HINST; lpCursorName: PWideChar): HCURSOR; stdcall; external user32 name 'LoadCursorW';
 {$ENDIF}
 
+procedure wnd_Select;
+begin
+  BringWindowToTop( wndHandle );
+end;
+
 function wnd_Create( Width, Height : Integer ) : Boolean;
 begin
+  Result := TRUE;
+  if wndHandle <> 0 Then exit;
+
   Result    := FALSE;
   wndX      := 0;
   wndY      := 0;
@@ -143,16 +150,19 @@ begin
   //    wndDC := 0;
   //  end;
 
-  if ( wndHandle <> 0 ) and ( not DestroyWindow( wndHandle ) ) Then
+  if not appInitedToHandle Then
     begin
-      u_Error( 'Cannot destroy window' );
-      wndHandle := 0;
-    end;
+      if ( wndHandle <> 0 ) and ( not DestroyWindow( wndHandle ) ) Then
+        begin
+          u_Error( 'Cannot destroy window' );
+          wndHandle := 0;
+        end;
 
-  if not UnRegisterClassW( wndClassName, wndINST ) Then
-    begin
-      u_Error( 'Cannot unregister window class' );
-      wndINST := 0;
+      if not UnRegisterClassW( wndClassName, wndINST ) Then
+        begin
+          u_Error( 'Cannot unregister window class' );
+          wndINST := 0;
+        end;
     end;
   wndHandle := 0;
 end;
@@ -233,11 +243,6 @@ end;
 procedure wnd_ShowCursor( Show : Boolean );
 begin
   appShowCursor := Show;
-end;
-
-procedure wnd_Select;
-begin
-  BringWindowToTop( wndHandle );
 end;
 
 initialization

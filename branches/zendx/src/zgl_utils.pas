@@ -29,7 +29,6 @@ uses
 
 const
   LIB_ERROR  = 0;
-  EVENT_STATE_NULL = {$IFDEF FPC} nil {$ELSE} 0 {$ENDIF};
 
 function u_IntToStr( Value : Integer ) : UTF8String;
 function u_StrToInt( const Value : UTF8String ) : Integer;
