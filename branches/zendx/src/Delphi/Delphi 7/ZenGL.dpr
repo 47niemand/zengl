@@ -89,6 +89,7 @@ uses
   zgl_particles_2d,
   {$ENDIF}
   zgl_sprite_2d,
+  zgl_tiles_2d,
   zgl_grid_2d,
 
   zgl_file,
@@ -141,6 +142,7 @@ exports
   // INI
   ini_LoadFromFile         name prefix + 'ini_LoadFromFile',
   ini_SaveToFile           name prefix + 'ini_SaveToFile',
+  ini_Free                 name prefix + 'ini_Free',
   ini_Add                  name prefix + 'ini_Add',
   ini_Del                  name prefix + 'ini_Del',
   ini_Clear                name prefix + 'ini_Clear',
@@ -335,6 +337,7 @@ exports
   snd_PauseStream          name prefix + 'snd_PauseStream',
   snd_StopStream           name prefix + 'snd_StopStream',
   snd_ResumeStream         name prefix + 'snd_ResumeStream',
+  snd_SeekStream           name prefix + 'snd_SeekStream',
   {$ENDIF}
 
   // Video
@@ -344,6 +347,7 @@ exports
   video_OpenFile           name prefix + 'video_OpenFile',
   video_OpenMemory         name prefix + 'video_OpenMemory',
   video_Update             name prefix + 'video_Update',
+  video_Seek               name prefix + 'video_Seek',
   {$ENDIF}
 
   // Math
