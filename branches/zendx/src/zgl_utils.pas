@@ -72,7 +72,6 @@ function dlsym  ( hModule : HMODULE; lpProcName : PAnsiChar) : Pointer; stdcall;
 
 implementation
 uses
-  zgl_font,
   zgl_log;
 
 function u_IntToStr( Value : Integer ) : UTF8String;
