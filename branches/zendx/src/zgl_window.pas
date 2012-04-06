@@ -71,6 +71,8 @@ function LoadCursorW(hInstance: HINST; lpCursorName: PWideChar): HCURSOR; stdcal
 
 procedure wnd_Select;
 begin
+  if appInitedToHandle Then exit;
+
   BringWindowToTop( wndHandle );
 end;
 
@@ -171,6 +173,8 @@ procedure wnd_Update;
   var
     FullScreen : Boolean;
 begin
+  if appInitedToHandle Then exit;
+
   if appFocus Then
     FullScreen := wndFullScreen
   else
@@ -196,6 +200,8 @@ procedure wnd_SetCaption( const NewCaption : UTF8String );
   var
     len : Integer;
 begin
+  if appInitedToHandle Then exit;
+
   wndCaption := u_CopyUTF8Str( NewCaption );
   if wndHandle <> 0 Then
     begin
@@ -230,6 +236,8 @@ end;
 
 procedure wnd_SetPos( X, Y : Integer );
 begin
+  if appInitedToHandle Then exit;
+
   wndX := X;
   wndY := Y;
 
@@ -242,6 +250,8 @@ end;
 
 procedure wnd_ShowCursor( Show : Boolean );
 begin
+  if appInitedToHandle Then exit;
+
   appShowCursor := Show;
 end;
 
