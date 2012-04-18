@@ -1,5 +1,5 @@
 {
- *  Copyright © Kemka Andrey aka Andru
+ *  Copyright © Andrey Kemka aka Andru
  *  mail: dr.andru@gmail.com
  *  site: http://zengl.org
  *
@@ -1175,14 +1175,13 @@ begin
       if not sndInitialized Then break;
 
       thread_EventWait( sfEvent[ id ], 100 );
-      thread_EventReset( sfEvent[ id ] );
       while ( sfStream[ id ]._playing ) and ( sfStream[ id ]._paused ) do u_Sleep( 10 );
 
       thread_CSEnter( sfCS[ id ] );
+      thread_EventReset( sfEvent[ id ] );
       if sfSeek[ id ] > 0 Then
         begin
           sfStream[ id ]._decoder.Seek( sfStream[ id ], sfSeek[ id ] );
-          sfSeek[ id ] := 0;
 
           {$IFDEF USE_OPENAL}
           alSourceStop( sfSource[ id ] );
@@ -1212,6 +1211,7 @@ begin
 
           sfStream[ id ]._complete := sfSeek[ id ];
           sfStream[ id ]._lastTime := timer_GetTicks();
+          sfSeek[ id ]             := 0;
         end;
       thread_CSLeave( sfCS[ id ] );
 
@@ -1440,7 +1440,8 @@ begin
   if ( not sndInitialized ) or ( not Assigned( sfStream[ ID ]._decoder ) ) or
      ( not sfStream[ ID ]._playing ) or ( sfStream[ ID ]._paused ) or ( sfStream[ ID ]._waiting ) Then exit;
 
-  sfStream[ ID ]._paused := TRUE;
+  sfStream[ ID ]._paused   := TRUE;
+  sfStream[ ID ]._complete := timer_GetTicks() - sfStream[ ID ]._lastTime + sfStream[ ID ]._complete;
 
 {$IFDEF USE_OPENAL}
   alSourcePause( sfSource[ ID ] );
@@ -1468,7 +1469,8 @@ begin
   if ( not sndInitialized ) or ( not Assigned( sfStream[ ID ]._decoder ) ) or
      ( not sfStream[ ID ]._playing ) or ( not sfStream[ ID ]._paused ) or ( sfStream[ ID ]._waiting ) Then exit;
 
-  sfStream[ ID ]._paused := FALSE;
+  sfStream[ ID ]._paused   := FALSE;
+  sfStream[ ID ]._lastTime := timer_GetTicks();
 {$IFDEF USE_OPENAL}
   alSourcePlay( sfSource[ ID ] );
 {$ELSE}
