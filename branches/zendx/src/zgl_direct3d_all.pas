@@ -585,6 +585,8 @@ begin
       d3dDevice.SetViewport( d3dViewport );
     end else
       begin
+        if cam2d.Apply Then glPopMatrix();
+
         glDisable( GL_DEPTH_TEST );
         glMatrixMode( GL_PROJECTION );
         glLoadIdentity;
