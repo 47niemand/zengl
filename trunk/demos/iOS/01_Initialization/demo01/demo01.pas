@@ -46,11 +46,6 @@ begin
   //
 end;
 
-procedure Quit;
-begin
-  //
-end;
-
 Begin
   // RU: Для загрузки/создания каких-то своих настроек/профилей/etc. можно получить путь к домашенему каталогу пользователя, или к исполняемому файлу(не работает для GNU/Linux).
   // EN: For loading/creating your own options/profiles/etc. you can get path to user home directory, or to executable file(not works for GNU/Linux).
@@ -70,9 +65,6 @@ Begin
   // RU: Регистрируем процедуру, которая будет принимать разницу времени между кадрами.
   // EN: Register the procedure, that will get delta time between the frames.
   zgl_Reg( SYS_UPDATE, @Update );
-  // RU: Регистрируем процедуру, которая выполнится после завершения работы ZenGL.
-  // EN: Register the procedure, that will be executed after ZenGL shutdown.
-  zgl_Reg( SYS_EXIT, @Quit );
 
   // RU: Указываем первоначальные настройки.
   // EN: Set screen options.
