@@ -1212,6 +1212,7 @@ type
       Height    : Word;
       FrameRate : Single;
       Duration  : Double;
+      Frames    : Integer;
                 end;
 
     Loop       : Boolean;
