@@ -1153,7 +1153,7 @@ begin
   Result := -1;
 end;
 
-function snd_ProcStream( data : Pointer ) : LongInt;
+function snd_ProcStream( data : Pointer ) : LongInt; register;
   var
     id        : Integer;
     _end      : Boolean;
