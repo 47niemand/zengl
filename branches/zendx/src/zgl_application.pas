@@ -90,10 +90,6 @@ uses
   {$ENDIF}
   zgl_utils;
 
-var
-  // workaround for resolution changng
-  d3dwrc : Boolean;
-
 procedure app_Draw;
 begin
   SetCurrentMode();
@@ -216,8 +212,6 @@ begin
       TranslateMessage( m );
       DispatchMessageW( m );
     end;
-
-  d3dwrc := FALSE;
 end;
 
 function app_ProcessMessages( hWnd : HWND; Msg : UINT; wParam : WPARAM; lParam : LPARAM ) : LRESULT; stdcall;
@@ -245,14 +239,7 @@ begin
       end;
     WM_DISPLAYCHANGE:
       begin
-        if scrChanging or d3dwrc Then
-          begin
-            scrChanging := FALSE;
-            exit;
-          end;
         scr_Init();
-        scrWidth  := scrDesktop.dmPelsWidth;
-        scrHeight := scrDesktop.dmPelsHeight;
         if ( not wndFullScreen ) and ( scr_Create() ) Then
           wnd_Update();
       end;
@@ -261,7 +248,6 @@ begin
         if appMinimized Then exit;
         if ( wParam > 0 ) and ( not appFocus ) Then
           begin
-            d3dwrc   := TRUE;
             appPause := FALSE;
             if appWork and Assigned( app_PActivate ) Then
               app_PActivate( TRUE );
