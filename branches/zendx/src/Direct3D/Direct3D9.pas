@@ -3433,6 +3433,7 @@ type
 
   // forward interfaces declaration
   IDirect3D9 = interface;
+  IDirect3D9Ex = interface;
   IDirect3DDevice9 = interface;
   IDirect3DStateBlock9 = interface;
   IDirect3DVertexDeclaration9 = interface;
@@ -3479,6 +3480,59 @@ type
   end;
 
 
+//***************//
+// Direct3D 9 Ex //
+//***************//
+  D3DSCANLINEORDERING = ( D3DSCANLINEORDERING_UNKNOWN,
+                          D3DSCANLINEORDERING_PROGRESSIVE,
+                          D3DSCANLINEORDERING_INTERLACED );
+  D3DDISPLAYROTATION = ( D3DDISPLAYROTATION_IDENTITY = 1,
+                         D3DDISPLAYROTATION_90,
+                         D3DDISPLAYROTATION_180,
+                         D3DDISPLAYROTATION_270 );
+
+  PD3DDISPLAYMODEFILTER = ^D3DDISPLAYMODEFILTER;
+  D3DDISPLAYMODEFILTER  = record
+    Size             : LongWord;
+    Format           : D3DFORMAT;
+    ScanLineOrdering : D3DSCANLINEORDERING;
+  end;
+
+  PD3DDISPLAYMODEEX = ^D3DDISPLAYMODEEX;
+  D3DDISPLAYMODEEX  = record
+    Size             : LongWord;
+    Width            : LongWord;
+    Height           : LongWord;
+    RefreshRate      : LongWord;
+    Format           : D3DFORMAT;
+    ScanLineOrdering : D3DSCANLINEORDERING;
+  end;
+
+  {$HPPEMIT 'DECLARE_DINTERFACE_TYPE(IDirect3D9Ex);'}
+  {$EXTERNALSYM IDirect3D9Ex}
+  IDirect3D9Ex = interface(IUnknown)
+    (*** IDirect3D9 methods ***)
+    function RegisterSoftwareDevice(pInitializeFunction: Pointer): HResult; stdcall;
+    function GetAdapterCount: LongWord; stdcall;
+    function GetAdapterIdentifier(Adapter: LongWord; Flags: DWord; out pIdentifier: TD3DAdapterIdentifier9): HResult; stdcall;
+    function GetAdapterModeCount(Adapter: LongWord; Format: TD3DFormat): LongWord; stdcall;
+    function EnumAdapterModes(Adapter: LongWord; Format: TD3DFormat; Mode: LongWord; out pMode: TD3DDisplayMode): HResult; stdcall;
+    function GetAdapterDisplayMode(Adapter: LongWord; out pMode: TD3DDisplayMode): HResult; stdcall;
+    function CheckDeviceType(Adapter: LongWord; CheckType: TD3DDevType; AdapterFormat, BackBufferFormat: TD3DFormat; Windowed: BOOL): HResult; stdcall;
+    function CheckDeviceFormat(Adapter: LongWord; DeviceType: TD3DDevType; AdapterFormat: TD3DFormat; Usage: DWord; RType: TD3DResourceType; CheckFormat: TD3DFormat): HResult; stdcall;
+    function CheckDeviceMultiSampleType(Adapter: LongWord; DeviceType: TD3DDevType; SurfaceFormat: TD3DFormat; Windowed: BOOL; MultiSampleType: TD3DMultiSampleType; pQualityLevels: PDWORD): HResult; stdcall;
+    function CheckDepthStencilMatch(Adapter: LongWord; DeviceType: TD3DDevType; AdapterFormat, RenderTargetFormat, DepthStencilFormat: TD3DFormat): HResult; stdcall;
+    function CheckDeviceFormatConversion(Adapter: LongWord; DeviceType: TD3DDevType; SourceFormat, TargetFormat: TD3DFormat): HResult; stdcall;
+    function GetDeviceCaps(Adapter: LongWord; DeviceType: TD3DDevType; out pCaps: TD3DCaps9): HResult; stdcall;
+    function GetAdapterMonitor(Adapter: LongWord): HMONITOR; stdcall;
+    function CreateDevice(Adapter: LongWord; DeviceType: TD3DDevType; hFocusWindow: HWND; BehaviorFlags: DWord; var pPresentationParameters: TD3DPresentParameters; out ppReturnedDeviceInterface: IDirect3DDevice9): HResult; stdcall;
+    (*** IDirect3D9Ex methods ***)
+    function GetAdapterModeCountEx(Adapter: LongWord; pFilter: PD3DDISPLAYMODEFILTER): HResult; stdcall;
+    function EnumAdapterModesEx(Adapter: LongWord; pFilter: PD3DDISPLAYMODEFILTER; Mode: LongWord; out pMode: D3DDISPLAYMODEEX): HResult; stdcall;
+    function GetAdapterDisplayModeEx(Adapter: LongWord; out pMode: D3DDISPLAYMODEEX; out pRotation: D3DDISPLAYROTATION): HResult; stdcall;
+    function CreateDeviceEx(Adapter: LongWord; DeviceType: TD3DDevType; hFocusWindow: HWND; BehaviorFlags: DWord; var pPresentationParameters: TD3DPresentParameters; pFullscreenDisplayMode : PD3DDISPLAYMODEEX; out ppReturnedDeviceInterface: IDirect3DDevice9): HResult; stdcall;
+    //function GetAdapterLUID( Adatper : LongWord; pLUID : ^LUID ) PURE;
+  end;
 
 { SwapChain }
 
@@ -4329,6 +4383,8 @@ type
   TD3DVS_AddressMode_Type               = TD3DVSAddressModeType;
   TD3DVS_RastOut_Offsets                = TD3DVSRastOutOffsets;
 
+var
+  Direct3DCreate9Ex : function( SDKVersion : LongWord; out Device : IDirect3D9Ex ) : HResult; stdcall;
 
 implementation
 

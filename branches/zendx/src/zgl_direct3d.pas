@@ -65,7 +65,7 @@ var
   d3dFormat   : TD3DFormat = D3DFMT_UNKNOWN;
   {$ENDIF}
   {$IFDEF USE_DIRECT3D9}
-  d3d         : IDirect3D9;
+  d3d         : IDirect3D9Ex;
   d3dDevice   : IDirect3DDevice9;
   d3dSurface  : IDirect3DSurface9;
   d3dStencil  : IDirect3DSurface9;
@@ -76,9 +76,10 @@ var
   d3dFormat   : TD3DFormat = D3DFMT_UNKNOWN;
   {$ENDIF}
 
-  d3dParams   : TD3DPresentParameters;
-  d3dParamsW  : TD3DPresentParameters;
-  d3dParamsF  : TD3DPresentParameters;
+  d3dParams      : TD3DPresentParameters;
+  d3dParamsW     : TD3DPresentParameters;
+  d3dParamsF     : TD3DPresentParameters;
+  //d3dDisplayMode : D3DDISPLAYMODEEX;
 
   d3dCanDraw : Boolean;
 
@@ -130,6 +131,10 @@ var
 function d3d_Create : Boolean;
   var
     i, modeCount : Integer;
+    {$IFDEF USE_DIRECT3D9}
+    {d3dLibrary : HMODULE;
+    d3dModeEx  : PD3DDISPLAYMODEEX;}
+    {$ENDIF}
 begin
   Result := FALSE;
 
@@ -145,7 +150,19 @@ begin
   log_Add( 'D3D8_RENDERER: ' + d3dAdapter.Description );
   {$ENDIF}
   {$IFDEF USE_DIRECT3D9}
-  d3d := Direct3DCreate9( D3D_SDK_VERSION );
+  {d3dLibrary := dlopen( Direct3D9dll );
+  if d3dLibrary <> 0 Then
+    begin
+      Direct3DCreate9Ex := dlsym( d3dLibrary, 'Direct3DCreate9Ex' );
+      dlclose( d3dLibrary );
+    end;
+
+  if Assigned( Direct3DCreate9Ex ) Then
+    if Direct3DCreate9Ex( D3D_SDK_VERSION, d3d ) <> D3D_OK Then
+      Direct3DCreate9Ex := nil;}
+
+  if not Assigned( Direct3DCreate9Ex ) Then
+    d3d := IDirect3D9Ex( Direct3DCreate9( D3D_SDK_VERSION ) );
   if not Assigned( d3d ) Then
     begin
       u_Error( 'Direct3DCreate9 Error' );
@@ -274,28 +291,61 @@ begin
       AutoDepthStencilFormat := D3DFMT_D16;
     end;
 
+  {with d3dDisplayMode do
+    begin
+      Size             := SizeOf( D3DDISPLAYMODEEX );
+      Width            := d3dParamsF.BackBufferWidth;
+      Height           := d3dParamsF.BackBufferHeight;
+      Format           := d3dFormat;
+      RefreshRate      := 0;
+      ScanLineOrdering := D3DSCANLINEORDERING_PROGRESSIVE;
+    end;}
+
   if wndFullScreen Then
-    d3dParams := d3dParamsF
-  else
-    d3dParams := d3dParamsW;
+    begin
+      d3dParams := d3dParamsF;
+      //d3dModeEx := @d3dDisplayMode;
+    end else
+      begin
+        d3dParams := d3dParamsW;
+        //d3dModeEx := nil;
+      end;
 
   // D3D Device
-  // D3DCREATE_HARDWARE_VERTEXPROCESSING
-  if d3d.CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $40 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dDevice ) <> D3D_OK Then
+  {if Assigned( Direct3DCreate9Ex ) Then
     begin
-      //D3DCREATE_SOFTWARE_VERTEXPROCESSING
-      if d3d.CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $20 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dDevice ) <> D3D_OK Then
+      // D3DCREATE_HARDWARE_VERTEXPROCESSING
+      if d3d.CreateDeviceEx( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $40 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dModeEx, d3dDevice ) <> D3D_OK Then
         begin
-          //D3DCREATE_PUREDEVICE
-          if d3d.CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $10 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dDevice ) <> D3D_OK Then
+          //D3DCREATE_SOFTWARE_VERTEXPROCESSING
+          if d3d.CreateDeviceEx( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $20 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dModeEx, d3dDevice ) <> D3D_OK Then
             begin
-              u_Error( 'Can''t create d3d device' );
-              exit;
-            end else log_Add( 'D3DCREATE_PUREDEVICE' );
-        end else log_Add( 'D3DCREATE_SOFTWARE_VERTEXPROCESSING' );
-    end else log_Add( 'D3DCREATE_HARDWARE_VERTEXPROCESSING' );
+              //D3DCREATE_PUREDEVICE
+              if d3d.CreateDeviceEx( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $10 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dModeEx, d3dDevice ) <> D3D_OK Then
+                begin
+                  u_Error( 'Can''t create d3d device' );
+                  exit;
+                end else log_Add( 'D3DCREATEEX_PUREDEVICE' );
+            end else log_Add( 'D3DCREATEEX_SOFTWARE_VERTEXPROCESSING' );
+        end else log_Add( 'D3DCREATEEX_HARDWARE_VERTEXPROCESSING' );
+    end else}
+      // D3DCREATE_HARDWARE_VERTEXPROCESSING
+      if d3d.CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $40 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dDevice ) <> D3D_OK Then
+        begin
+          //D3DCREATE_SOFTWARE_VERTEXPROCESSING
+          if d3d.CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $20 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dDevice ) <> D3D_OK Then
+            begin
+              //D3DCREATE_PUREDEVICE
+              if d3d.CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $10 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dDevice ) <> D3D_OK Then
+                begin
+                  u_Error( 'Can''t create d3d device' );
+                  exit;
+                end else log_Add( 'D3DCREATE_PUREDEVICE' );
+            end else log_Add( 'D3DCREATE_SOFTWARE_VERTEXPROCESSING' );
+        end else log_Add( 'D3DCREATE_HARDWARE_VERTEXPROCESSING' );
 
   d3d_ResetState();
+  wnd_Update();
 
   Result := TRUE;
 end;
