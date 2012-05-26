@@ -29,7 +29,7 @@ uses
 
 const
   cs_ZenGL    = 'ZenGL 0.3 beta 4';
-  cs_Date     = '2012.05.20';
+  cs_Date     = '2012.05.26';
   cv_major    = 0;
   cv_minor    = 3;
   cv_revision = 0;

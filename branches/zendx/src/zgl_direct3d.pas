@@ -74,12 +74,17 @@ var
   d3dAdapter  : TD3DAdapterIdentifier9;
   d3dMode     : TD3DDisplayMode;
   d3dFormat   : TD3DFormat = D3DFMT_UNKNOWN;
+
+  // D3D9Ex
+  d3dCanD3DEx     : Boolean;
+  d3dDefaultUsage : LongWord;
+  d3dDefaultPool  : TD3DPool;
+  d3dDisplayMode  : D3DDISPLAYMODEEX;
   {$ENDIF}
 
-  d3dParams      : TD3DPresentParameters;
-  d3dParamsW     : TD3DPresentParameters;
-  d3dParamsF     : TD3DPresentParameters;
-  //d3dDisplayMode : D3DDISPLAYMODEEX;
+  d3dParams  : TD3DPresentParameters;
+  d3dParamsW : TD3DPresentParameters;
+  d3dParamsF : TD3DPresentParameters;
 
   d3dCanDraw : Boolean;
 
@@ -132,8 +137,8 @@ function d3d_Create : Boolean;
   var
     i, modeCount : Integer;
     {$IFDEF USE_DIRECT3D9}
-    {d3dLibrary : HMODULE;
-    d3dModeEx  : PD3DDISPLAYMODEEX;}
+    d3dLibrary : HMODULE;
+    d3dModeEx  : PD3DDISPLAYMODEEX;
     {$ENDIF}
 begin
   Result := FALSE;
@@ -150,24 +155,30 @@ begin
   log_Add( 'D3D8_RENDERER: ' + d3dAdapter.Description );
   {$ENDIF}
   {$IFDEF USE_DIRECT3D9}
-  {d3dLibrary := dlopen( Direct3D9dll );
+  d3dLibrary := dlopen( Direct3D9dll );
   if d3dLibrary <> 0 Then
     begin
       Direct3DCreate9Ex := dlsym( d3dLibrary, 'Direct3DCreate9Ex' );
       dlclose( d3dLibrary );
     end;
 
-  if Assigned( Direct3DCreate9Ex ) Then
-    if Direct3DCreate9Ex( D3D_SDK_VERSION, d3d ) <> D3D_OK Then
-      Direct3DCreate9Ex := nil;}
-
-  if not Assigned( Direct3DCreate9Ex ) Then
-    d3d := IDirect3D9Ex( Direct3DCreate9( D3D_SDK_VERSION ) );
-  if not Assigned( d3d ) Then
+  d3dCanD3DEx     := TRUE;
+  d3dDefaultUsage := D3DUSAGE_DYNAMIC;
+  d3dDefaultPool  := D3DPOOL_DEFAULT;
+  if ( not Assigned( Direct3DCreate9Ex ) ) or ( Direct3DCreate9Ex( D3D_SDK_VERSION, d3d ) <> D3D_OK ) Then
     begin
-      u_Error( 'Direct3DCreate9 Error' );
-      exit;
-    end else log_Add( 'Direct3DCreate9' );
+      d3dCanD3DEx       := FALSE;
+      d3dDefaultUsage   := 0;
+      d3dDefaultPool    := D3DPOOL_MANAGED;
+      Direct3DCreate9Ex := nil;
+      d3d := IDirect3D9Ex( Direct3DCreate9( D3D_SDK_VERSION ) );
+      if not Assigned( d3d ) Then
+        begin
+          u_Error( 'Direct3DCreate9 Error' );
+          exit;
+        end else log_Add( 'Direct3DCreate9' );
+    end else
+      log_Add( 'Direct3DCreate9Ex' );
 
   d3d.GetAdapterIdentifier( D3DADAPTER_DEFAULT, 0, d3dAdapter );
   log_Add( 'D3D9_RENDERER: ' + d3dAdapter.Description );
@@ -291,7 +302,8 @@ begin
       AutoDepthStencilFormat := D3DFMT_D16;
     end;
 
-  {with d3dDisplayMode do
+  {$IFDEF USE_DIRECT3D9}
+  with d3dDisplayMode do
     begin
       Size             := SizeOf( D3DDISPLAYMODEEX );
       Width            := d3dParamsF.BackBufferWidth;
@@ -299,20 +311,26 @@ begin
       Format           := d3dFormat;
       RefreshRate      := 0;
       ScanLineOrdering := D3DSCANLINEORDERING_PROGRESSIVE;
-    end;}
+    end;
+  {$ENDIF}
 
   if wndFullScreen Then
     begin
       d3dParams := d3dParamsF;
-      //d3dModeEx := @d3dDisplayMode;
+      {$IFDEF USE_DIRECT3D9}
+      d3dModeEx := @d3dDisplayMode;
+      {$ENDIF}
     end else
       begin
         d3dParams := d3dParamsW;
-        //d3dModeEx := nil;
+        {$IFDEF USE_DIRECT3D9}
+        d3dModeEx := nil;
+        {$ENDIF}
       end;
 
   // D3D Device
-  {if Assigned( Direct3DCreate9Ex ) Then
+  {$IFDEF USE_DIRECT3D9}
+  if Assigned( Direct3DCreate9Ex ) Then
     begin
       // D3DCREATE_HARDWARE_VERTEXPROCESSING
       if d3d.CreateDeviceEx( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $40 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dModeEx, d3dDevice ) <> D3D_OK Then
@@ -328,7 +346,8 @@ begin
                 end else log_Add( 'D3DCREATEEX_PUREDEVICE' );
             end else log_Add( 'D3DCREATEEX_SOFTWARE_VERTEXPROCESSING' );
         end else log_Add( 'D3DCREATEEX_HARDWARE_VERTEXPROCESSING' );
-    end else}
+    end else
+    {$ENDIF}
       // D3DCREATE_HARDWARE_VERTEXPROCESSING
       if d3d.CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wndHandle, $40 or D3DCREATE_FPU_PRESERVE, d3dParams, d3dDevice ) <> D3D_OK Then
         begin

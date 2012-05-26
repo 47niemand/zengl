@@ -1385,7 +1385,7 @@ begin
       if d3dDevice.CreateTexture( width, height, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, d3dTexArray[ RenderTexID ].Texture ) <> D3D_OK Then
       {$ENDIF}
       {$IFDEF USE_DIRECT3D9}
-      if d3dDevice.CreateTexture( width, height, 1, D3DUSAGE_AUTOGENMIPMAP * d3dTexArray[ RenderTexID ].AutoMipMap, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
+      if d3dDevice.CreateTexture( width, height, 1, d3dDefaultUsage or D3DUSAGE_AUTOGENMIPMAP * d3dTexArray[ RenderTexID ].AutoMipMap, D3DFMT_A8R8G8B8, d3dDefaultPool,
                                   d3dTexArray[ RenderTexID ].Texture, nil ) <> D3D_OK Then
       {$ENDIF}
         begin
@@ -1529,7 +1529,7 @@ begin
       d3dDevice.CreateTexture( width, height, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, d3dTexArray[ d3dTexCount - 1 ].Texture );
       {$ENDIF}
       {$IFDEF USE_DIRECT3D9}
-      d3dDevice.CreateTexture( width, height, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, d3dTexArray[ d3dTexCount - 1 ].Texture, nil );
+      d3dDevice.CreateTexture( width, height, 0, d3dDefaultUsage, D3DFMT_A8R8G8B8, d3dDefaultPool, d3dTexArray[ d3dTexCount - 1 ].Texture, nil );
       {$ENDIF}
       d3dTexArray[ d3dTexCount - 1 ].Texture.LockRect( 0, r, nil, D3DLOCK_DISCARD );
       d3d_FillTexture( data, r.pBits, width, height );
