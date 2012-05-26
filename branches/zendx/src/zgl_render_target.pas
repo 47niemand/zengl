@@ -337,7 +337,7 @@ begin
           d3dSurface := nil;
           d3dStencil := nil;
 
-          if lRTarget.Flags and RT_SAVE_CONTENT > 0 Then
+          if {$IFDEF USE_DIRECT3D9} ( not d3dCanD3DEx ) and {$ENDIF} ( lRTarget.Flags and RT_SAVE_CONTENT > 0 ) Then
             rtarget_Save( lRTarget.Surface );
 
           oglTarget  := TARGET_SCREEN;
