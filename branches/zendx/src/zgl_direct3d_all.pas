@@ -1392,7 +1392,7 @@ begin
           log_Add( 'Can''t CreateTexture' );
           exit;
         end;
-      d3dTexArray[ RenderTexID ].Texture.LockRect( level, r, nil, D3DLOCK_DISCARD );
+      d3dTexArray[ RenderTexID ].Texture.LockRect( level, r, nil, 0 );
       d3d_FillTexture( pixels, r.pBits, width, height );
       d3dTexArray[ RenderTexID ].Texture.UnlockRect( level );
     end;
@@ -1413,7 +1413,7 @@ begin
      ( not Assigned( d3dTexArray[ RenderTexID ].Texture ) ) Then exit;
 
   d3dTexArray[ RenderTexID ].Texture.GetLevelDesc( level, d );
-  if d.Pool = D3DPOOL_MANAGED Then
+  if ( d.Pool = D3DPOOL_MANAGED ) {$IFDEF USE_DIRECT3D9} or d3dCanD3DEx {$ENDIF} Then
     begin
       a.Left   := xoffset;
       a.Top    := yoffset;
@@ -1440,9 +1440,9 @@ begin
      ( not Assigned( d3dTexArray[ RenderTexID ].Texture ) ) Then exit;
 
   d3dTexArray[ RenderTexID ].Texture.GetLevelDesc( level, d );
-  if d.Pool = D3DPOOL_MANAGED Then
+  if ( d.Pool = D3DPOOL_MANAGED ) {$IFDEF USE_DIRECT3D9} or d3dCanD3DEx {$ENDIF} Then
     begin
-      d3dTexArray[ RenderTexID ].Texture.LockRect( level, r, nil, D3DLOCK_READONLY or D3DLOCK_DISCARD );
+      d3dTexArray[ RenderTexID ].Texture.LockRect( level, r, nil, D3DLOCK_READONLY );
       d3d_FillTexture( r.pBits, pixels, d.Width, d.Height );
       d3dTexArray[ RenderTexID ].Texture.UnlockRect( 0 );
     end else
@@ -1531,7 +1531,7 @@ begin
       {$IFDEF USE_DIRECT3D9}
       d3dDevice.CreateTexture( width, height, 0, d3dDefaultUsage, D3DFMT_A8R8G8B8, d3dDefaultPool, d3dTexArray[ d3dTexCount - 1 ].Texture, nil );
       {$ENDIF}
-      d3dTexArray[ d3dTexCount - 1 ].Texture.LockRect( 0, r, nil, D3DLOCK_DISCARD );
+      d3dTexArray[ d3dTexCount - 1 ].Texture.LockRect( 0, r, nil, 0 );
       d3d_FillTexture( data, r.pBits, width, height );
       d3dTexArray[ d3dTexCount - 1 ].Texture.UnlockRect( 0 );
     end else
