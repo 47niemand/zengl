@@ -16,16 +16,6 @@ win32: clean
 	-Fu../../lib/zip/i386-win32 \
 	$(TMP) $(FLAGS) -o$(OUTPUT)$(TARGET) -TWIN32 -Pi386 -WG
 
-win64: clean
-	$(FPC) ../ZenGL.pas $(INCLUDE) \
-	-Fu../../lib/jpeg/x86_64-win64 \
-	-Fu../../lib/msvcrt/x86_64 \
-	-Fu../../lib/ogg/x86_64-win64 \
-	-Fu../../lib/theora/x86_64-win64 \
-	-Fu../../lib/zlib/x86_64-win64 \
-	-Fu../../lib/zip/x86_64-win64 \
-	$(TMP) $(FLAGS) -o$(OUTPUT)$(TARGET) -TWIN64 -Px86_64 -WG
-
 clean:
 	rm -f *.*~
 	rm -f -R ./tmp/*
