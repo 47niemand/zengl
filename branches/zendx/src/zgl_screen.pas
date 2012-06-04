@@ -40,7 +40,7 @@ procedure scr_Reset;
 procedure scr_Clear;
 procedure scr_Flush;
 
-procedure scr_SetOptions( Width, Height, Refresh : Word; FullScreen, VSync : Boolean );
+function  scr_SetOptions( Width, Height, Refresh : Word; FullScreen, VSync : Boolean ) : Boolean;
 procedure scr_CorrectResolution( Width, Height : Word );
 procedure scr_SetViewPort;
 procedure scr_SetVSync( VSync : Boolean );
@@ -207,8 +207,9 @@ begin
   d3d_BeginScene();
 end;
 
-procedure scr_SetOptions( Width, Height, Refresh : Word; FullScreen, VSync : Boolean );
+function scr_SetOptions( Width, Height, Refresh : Word; FullScreen, VSync : Boolean ) : Boolean;
 begin
+  Result        := TRUE;
   wndWidth      := Width;
   wndHeight     := Height;
   scrRefresh    := Refresh;
