@@ -155,6 +155,7 @@ begin
   log_Add( 'D3D8_RENDERER: ' + d3dAdapter.Description );
   {$ENDIF}
   {$IFDEF USE_DIRECT3D9}
+  {$IFDEF USE_DIRECT3D9Ex}
   d3dLibrary := dlopen( Direct3D9dll );
   if d3dLibrary <> 0 Then
     begin
@@ -167,6 +168,7 @@ begin
   d3dDefaultPool  := D3DPOOL_DEFAULT;
   if ( not Assigned( Direct3DCreate9Ex ) ) or ( Direct3DCreate9Ex( D3D_SDK_VERSION, d3d ) <> D3D_OK ) Then
     begin
+  {$ENDIF}
       d3dCanD3DEx       := FALSE;
       d3dDefaultUsage   := 0;
       d3dDefaultPool    := D3DPOOL_MANAGED;
@@ -177,8 +179,10 @@ begin
           u_Error( 'Direct3DCreate9 Error' );
           exit;
         end else log_Add( 'Direct3DCreate9' );
+  {$IFDEF USE_DIRECT3D9Ex}
     end else
       log_Add( 'Direct3DCreate9Ex' );
+  {$ENDIF}
 
   d3d.GetAdapterIdentifier( D3DADAPTER_DEFAULT, 0, d3dAdapter );
   log_Add( 'D3D9_RENDERER: ' + d3dAdapter.Description );
