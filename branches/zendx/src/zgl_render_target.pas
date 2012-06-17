@@ -256,10 +256,10 @@ begin
       lResCX     := scrResCX;
       lResCY     := scrResCY;
 
-      if Target.Surface <> Target.Handle.Old Then
+      if {$IFDEF USE_DIRECT3D9} ( not d3dCanD3DEx ) and {$ENDIF} ( Target.Surface <> Target.Handle.Old ) Then
         begin
           d3dTexArray[ Target.Surface.ID ].Texture.GetLevelDesc( 0, d );
-          if {$IFDEF USE_DIRECT3D9} ( not d3dCanD3DEx ) and {$ENDIF} ( d.Pool <> D3DPOOL_DEFAULT ) Then
+          if d.Pool <> D3DPOOL_DEFAULT Then
             begin
               Target.Handle.Old := Target.Surface;
               rtarget_Save( Target.Surface );
