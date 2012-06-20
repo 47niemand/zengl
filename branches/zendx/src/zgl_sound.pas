@@ -1465,6 +1465,8 @@ begin
 {$ENDIF}
 
   thread_EventSet( sfEvent[ ID ] );
+  while sfEvent[ ID ] <> nil do;
+  thread_Close( sfThread[ ID ] );
 end;
 
 procedure snd_ResumeStream( ID : Integer );
