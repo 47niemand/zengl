@@ -55,14 +55,14 @@ begin
   logStart := Round( timer_GetTicks() );
 
   if not Assigned( logFile ) Then
-    logFile := u_GetPAnsiChar( 'log.txt' )
+    logFile := utf8_GetPAnsiChar( 'log.txt' )
   else
-    logFile := u_GetPAnsiChar( logFile );
+    logFile := utf8_GetPAnsiChar( logFile );
 
   file_Open( log, logFile, FOM_CREATE );
   // crazy code :)
   es := '';
-  for i := 0 to length( cs_ZenGL + ' (' + cs_Date + ')' ) + 7 do
+  for i := 0 to Length( cs_ZenGL + ' (' + cs_Date + ')' ) + 7 do
     es := es + '=';
   log_Add( es, FALSE );
   log_Add( '=== ' + cs_ZenGL + ' (' + cs_Date + ') ===', FALSE );
@@ -90,7 +90,7 @@ begin
   else
     str := Message + #13#10;
 
-  file_Write( log, str[ 1 ], length( str ) );
+  file_Write( log, str[ 1 ], Length( str ) );
 
   {$IFDEF USE_LOG_FLUSH}
   log_Flush();

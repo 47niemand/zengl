@@ -448,7 +448,7 @@ begin
         if keysCanText Then
         case winkey_to_scancode( wParam ) of
           K_ENTER:;
-          K_BACKSPACE: u_Backspace( keysText );
+          K_BACKSPACE: utf8_Backspace( keysText );
           K_TAB:       key_InputText( '  ' );
         else
           len := WideCharToMultiByte( CP_UTF8, 0, @wParam, 1, nil, 0, nil, nil );

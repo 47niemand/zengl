@@ -40,6 +40,10 @@
               <UseAnsiStrings Value="False"/>
             </SyntaxOptions>
           </Parsing>
+          <CodeGeneration>
+            <TargetCPU Value="i386"/>
+            <TargetOS Value="win32"/>
+          </CodeGeneration>
           <Linking>
             <Debugging>
               <DebugInfoType Value="dsDwarf2Set"/>
@@ -82,6 +86,8 @@
           </Parsing>
           <CodeGeneration>
             <SmartLinkUnit Value="True"/>
+            <TargetCPU Value="i386"/>
+            <TargetOS Value="win32"/>
             <Optimizations>
               <OptimizationLevel Value="3"/>
             </Optimizations>
@@ -130,6 +136,10 @@
               <UseAnsiStrings Value="False"/>
             </SyntaxOptions>
           </Parsing>
+          <CodeGeneration>
+            <TargetCPU Value="i386"/>
+            <TargetOS Value="win32"/>
+          </CodeGeneration>
           <Linking>
             <Debugging>
               <DebugInfoType Value="dsDwarf2Set"/>
@@ -427,13 +437,13 @@
     </Units>
   </ProjectOptions>
   <CompilerOptions>
-    <Version Value="9"/>
+    <Version Value="11"/>
     <Target>
       <Filename Value="./ZenGL.dll"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="../Direct3D;../../lib/jpeg/$(TargetCPU)-$(TargetOS);../../lib/msvcrt/$(TargetCPU);../../lib/msvcrt/$(TargetCPU);../../lib/ogg/$(TargetCPU)-$(TargetOS);../../lib/theora/$(TargetCPU)-$(TargetOS);../../lib/zlib/$(TargetCPU)-$(TargetOS);../../lib/zip/$(TargetCPU)-$(TargetOS)"/>
+      <OtherUnitFiles Value="../Direct3D;../../lib/jpeg/$(TargetCPU)-$(TargetOS);../../lib/msvcrt/$(TargetCPU);../../lib/ogg/$(TargetCPU)-$(TargetOS);../../lib/theora/$(TargetCPU)-$(TargetOS);../../lib/zlib/$(TargetCPU)-$(TargetOS);../../lib/zip/$(TargetCPU)-$(TargetOS)"/>
       <UnitOutputDirectory Value="../tmp"/>
     </SearchPaths>
     <Parsing>
@@ -446,6 +456,8 @@
     </Parsing>
     <CodeGeneration>
       <SmartLinkUnit Value="True"/>
+      <TargetCPU Value="i386"/>
+      <TargetOS Value="win32"/>
       <Optimizations>
         <OptimizationLevel Value="3"/>
       </Optimizations>

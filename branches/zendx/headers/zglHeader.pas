@@ -3,7 +3,7 @@
 {--------------------------------}
 {                                }
 { version:  0.3 RC               }
-{ date:     2012.06.25           }
+{ date:     2012.06.26           }
 { license:  GNU LGPL version 3   }
 { homepage: http://zengl.org     }
 {                                }
@@ -1339,7 +1339,7 @@ var
   mem_SetSize      : procedure( var Memory : zglTMemory; Size : LongWord );
   mem_Free         : procedure( var Memory : zglTMemory );
 
-// Utils
+// String Utils
 function u_IntToStr( Value : Integer ) : UTF8String;
 function u_StrToInt( const Value : UTF8String ) : Integer;
 function u_FloatToStr( Value : Single; Digits : Integer = 2 ) : UTF8String;
@@ -1348,16 +1348,19 @@ function u_BoolToStr( Value : Boolean ) : UTF8String;
 function u_StrToBool( const Value : UTF8String ) : Boolean;
 // RU: Только для латинских символов попадающих в диапазон 0..127
 // EN: Only for latin symbols in range 0..127
-function u_StrUp( const str : UTF8String ) : UTF8String;
-function u_StrDown( const str : UTF8String ) : UTF8String;
+function u_StrUp( const Str : UTF8String ) : UTF8String;
+function u_StrDown( const Str : UTF8String ) : UTF8String;
 
-function u_CopyUTF8Str( const Str : UTF8String ) : UTF8String; overload;
-function u_CopyUTF8Str( const Str : UTF8String; FromPosition, Count : Integer ) : UTF8String; overload;
-
+function utf8_Copy( const Str : UTF8String ) : UTF8String; overload;
+function utf8_Copy( const Str : UTF8String; FromPosition, Count : Integer ) : UTF8String; overload;
+procedure utf8_Delete( var Str : UTF8String; FromPosition, Count : Integer );
 var
-  u_Length       : function( const Str : UTF8String ) : Integer;
-  u_GetUTF8Shift : procedure( const Text : UTF8String; Pos : Integer; out NewPos : Integer; Chars : Integer = 1 );
-  u_GetUTF8ID    : function( const Text : UTF8String; Pos : Integer; Shift : PInteger ) : LongWord;
+  utf8_Length    : function( const Str : UTF8String ) : Integer;
+  utf8_GetShift  : procedure( const Str : UTF8String; Pos : Integer; out NewPos : Integer; Chars : Integer = 1 );
+  utf8_GetID     : function( const Str : UTF8String; Pos : Integer; Shift : PInteger ) : LongWord;
+
+// Utils
+var
   u_SortList     : procedure( var List : zglTStringList; iLo, iHi : Integer );
   u_Sleep        : procedure( Milliseconds : LongWord );
   u_Hash         : function( const Str : UTF8String ) : LongWord;
@@ -1402,7 +1405,7 @@ function ini_ReadKeyStr( const Section, Key : UTF8String ) : UTF8String;
     tmp : PAnsiChar;
 begin
   tmp := _ini_ReadKeyStr( Section, Key );
-  Result := u_CopyUTF8Str( tmp );
+  Result := utf8_Copy( tmp );
   zgl_FreeMem( Pointer( tmp ) );
 end;
 
@@ -1411,7 +1414,7 @@ function key_GetText : UTF8String;
     tmp : PAnsiChar;
 begin
   tmp := _key_GetText();
-  Result := u_CopyUTF8Str( tmp );
+  Result := utf8_Copy( tmp );
   zgl_FreeMem( Pointer( tmp ) );
 end;
 
@@ -1420,7 +1423,7 @@ function file_GetName( const FileName : UTF8String ) : UTF8String;
     tmp : PAnsiChar;
 begin
   tmp := _file_GetName( FileName );
-  Result := u_CopyUTF8Str( tmp );
+  Result := utf8_Copy( tmp );
   zgl_FreeMem( Pointer( tmp ) );
 end;
 
@@ -1429,7 +1432,7 @@ function file_GetExtension( const FileName : UTF8String ) : UTF8String;
     tmp : PAnsiChar;
 begin
   tmp := _file_GetExtension( FileName );
-  Result := u_CopyUTF8Str( tmp );
+  Result := utf8_Copy( tmp );
   zgl_FreeMem( Pointer( tmp ) );
 end;
 
@@ -1438,7 +1441,7 @@ function file_GetDirectory( const FileName : UTF8String ) : UTF8String;
     tmp : PAnsiChar;
 begin
   tmp := _file_GetDirectory( FileName );
-  Result := u_CopyUTF8Str( tmp );
+  Result := utf8_Copy( tmp );
   zgl_FreeMem( Pointer( tmp ) );
 end;
 
@@ -1489,45 +1492,6 @@ begin
       Result := FALSE;
 end;
 
-function u_CopyUTF8Str( const Str : UTF8String ) : UTF8String;
-  var
-    len : Integer;
-begin
-  len := length( Str );
-  SetLength( Result, len );
-  if len > 0 Then
-    System.Move( Str[ 1 ], Result[ 1 ], len );
-end;
-
-function u_CopyUTF8Str( const Str : UTF8String; FromPosition, Count : Integer ) : UTF8String;
-  var
-    i, j, len : Integer;
-begin
-  len := u_Length( Str );
-  if FromPosition < 1 Then FromPosition := 1;
-  if FromPosition > len Then exit;
-  if FromPosition + Count > len + 1 Then Count := len - FromPosition + 1;
-
-  i := 1;
-  u_GetUTF8Shift( Str, i, i, FromPosition - 1 );
-  j := i;
-  u_GetUTF8Shift( Str, j, j, Count );
-  SetLength( Result, j - i );
-  System.Move( Str[ i ], Result[ 1 ], j - i );
-end;
-
-{$IFDEF WINCE}
-function u_GetPWideChar( const Str : UTF8String ) : PWideChar;
-  var
-    len : Integer;
-begin
-  len := MultiByteToWideChar( CP_UTF8, 0, @Str[ 1 ], length( Str ), nil, 0 );
-  GetMem( Result, len * 2 + 2 );
-  Result[ len ] := #0;
-  MultiByteToWideChar( CP_UTF8, 0, @Str[ 1 ], length( Str ), Result, len );
-end;
-{$ENDIF}
-
 function u_StrUp( const Str : UTF8String ) : UTF8String;
   var
     i, l : Integer;
@@ -1553,6 +1517,70 @@ begin
     else
       Result[ i ] := Str[ i ];
 end;
+
+function utf8_Copy( const Str : UTF8String ) : UTF8String;
+  var
+    len : Integer;
+begin
+  len := length( Str );
+  SetLength( Result, len );
+  if len > 0 Then
+    System.Move( Str[ 1 ], Result[ 1 ], len );
+end;
+
+function utf8_Copy( const Str : UTF8String; FromPosition, Count : Integer ) : UTF8String;
+  var
+    i, j, len : Integer;
+begin
+  len := utf8_Length( Str );
+  if FromPosition < 1 Then FromPosition := 1;
+  if ( FromPosition > len ) or ( Count < 1 ) Then exit;
+  if FromPosition + Count > len + 1 Then Count := len - FromPosition + 1;
+
+  i := 1;
+  utf8_GetShift( Str, i, i, FromPosition - 1 );
+  utf8_GetShift( Str, i, j, Count );
+  SetLength( Result, j - i );
+  System.Move( Str[ i ], Result[ 1 ], j - i );
+end;
+
+procedure utf8_Delete( var Str : UTF8String; FromPosition, Count : Integer );
+  var
+    i, j, len : Integer;
+    Result    : UTF8String;
+begin
+  len := utf8_Length( Str );
+  if FromPosition < 1 Then FromPosition := 1;
+  if ( FromPosition > len ) or ( Count < 1 ) Then exit;
+  if FromPosition + Count > len + 1 Then Count := len - FromPosition + 1;
+  if ( FromPosition = 1 ) and ( Count = len ) Then
+    begin
+      Str := '';
+      exit;
+    end;
+
+  len := Length( Str );
+  i := 1;
+  utf8_GetShift( Str, i, i, FromPosition - 1 );
+  utf8_GetShift( Str, i, j, Count );
+  SetLength( Result, len - j + i );
+  System.Move( Str[ 1 ], Result[ 1 ], i - 1 );
+  if j < len Then
+    System.Move( Str[ j ], Result[ i ], len - ( j - 1 ) );
+  Str := Result;
+end;
+
+{$IFDEF WINCE}
+function utf8_GetPWideChar( const Str : UTF8String ) : PWideChar;
+  var
+    len : Integer;
+begin
+  len := MultiByteToWideChar( CP_UTF8, 0, @Str[ 1 ], length( Str ), nil, 0 );
+  GetMem( Result, len * 2 + 2 );
+  Result[ len ] := #0;
+  MultiByteToWideChar( CP_UTF8, 0, @Str[ 1 ], length( Str ), Result, len );
+end;
+{$ENDIF}
 
 function zglLoad( LibraryName : AnsiString; Error : Boolean = TRUE ) : Boolean;
   {$IFDEF WINCE}
@@ -1844,9 +1872,10 @@ begin
       mem_SetSize := dlsym( zglLib, 'mem_SetSize' );
       mem_Free := dlsym( zglLib, 'mem_Free' );
 
-      u_Length := dlsym( zglLib, 'u_Length' );
-      u_GetUTF8Shift := dlsym( zglLib, 'u_GetUTF8Shift' );
-      u_GetUTF8ID := dlsym( zglLib, 'u_GetUTF8ID' );
+      utf8_Length := dlsym( zglLib, 'utf8_Length' );
+      utf8_GetShift := dlsym( zglLib, 'utf8_GetShift' );
+      utf8_GetID := dlsym( zglLib, 'utf8_GetID' );
+
       u_SortList := dlsym( zglLib, 'u_SortList' );
       u_Hash := dlsym( zglLib, 'u_Hash' );
       u_Sleep := dlsym( zglLib, 'u_Sleep' );

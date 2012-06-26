@@ -212,7 +212,7 @@ end;
 
 procedure key_BeginReadText( const Text : UTF8String; MaxSymbols : Integer = -1 );
 begin
-  keysText    := u_CopyUTF8Str( Text );
+  keysText    := utf8_Copy( Text );
   keysMax     := MaxSymbols;
   keysCanText := TRUE;
 end;
@@ -221,7 +221,7 @@ procedure key_UpdateReadText( const Text : UTF8String; MaxSymbols : Integer = -1
 begin
   if keysCanText Then
     begin
-      keysText := u_CopyUTF8Str( Text );
+      keysText := utf8_Copy( Text );
       keysMax  := MaxSymbols;
     end;
 end;
@@ -351,7 +351,7 @@ procedure key_InputText( const Text : UTF8String );
   var
     c : AnsiChar;
 begin
-  if ( u_Length( keysText ) < keysMax ) or ( keysMax = -1 ) Then
+  if ( utf8_Length( keysText ) < keysMax ) or ( keysMax = -1 ) Then
     begin
       if ( appFlags and APP_USE_ENGLISH_INPUT > 0 ) and ( Text[ 1 ] <> ' ' )  Then
         begin
@@ -413,7 +413,7 @@ end;
 
 function _key_GetText : PAnsiChar;
 begin
-  Result := u_GetPAnsiChar( key_GetText() );
+  Result := utf8_GetPAnsiChar( key_GetText() );
 end;
 
 end.

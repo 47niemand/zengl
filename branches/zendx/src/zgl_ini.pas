@@ -85,14 +85,14 @@ function delSpaces( const str : UTF8String ) : UTF8String;
     i, b, e : Integer;
 begin
   b := 1;
-  e := length( str );
-  for i := 1 to length( str ) do
+  e := Length( str );
+  for i := 1 to Length( str ) do
     if str[ i ] = ' ' Then
       INC( b )
     else
       break;
 
-  for i := length( str ) downto 1 do
+  for i := Length( str ) downto 1 do
     if str[ i ] = ' ' Then
       DEC( e )
     else
@@ -107,7 +107,7 @@ procedure addData( const str : UTF8String );
 begin
   if str = '' Then exit;
   if str[ 1 ] = ';' Then exit;
-  len := length( str );
+  len := Length( str );
 
   if ( str[ 1 ] = '[' ) and ( str[ len ] = ']' ) Then
     begin
@@ -247,7 +247,7 @@ begin
   Result := FALSE;
   ini_Free();
   if not file_Exists( FileName ) Then exit;
-  iniRec.FileName := u_CopyUTF8Str( FileName );
+  iniRec.FileName := utf8_Copy( FileName );
 
   mem_LoadFromFile( iniMem, FileName );
   ini_Process();
@@ -265,13 +265,13 @@ begin
   for i := 0 to iniRec.Sections - 1 do
     begin
       s := '[ ' + iniRec.Section[ i ].Name + ' ]' + #13#10;
-      file_Write( f, s[ 1 ], length( s ) );
+      file_Write( f, s[ 1 ], Length( s ) );
       for j := 0 to iniRec.Section[ i ].Keys - 1 do
         begin
           s := iniRec.Section[ i ].Key[ j ].Name + ' = ';
-          file_Write( f, s[ 1 ], length( s ) );
+          file_Write( f, s[ 1 ], Length( s ) );
           s := iniRec.Section[ i ].Key[ j ].Value + #13#10;
-          file_Write( f, s[ 1 ], length( s ) );
+          file_Write( f, s[ 1 ], Length( s ) );
         end;
       if i = iniRec.Sections - 1 Then break;
         begin
@@ -293,8 +293,8 @@ procedure ini_Add( const Section, Key : UTF8String );
     s, k   : UTF8String;
     ns, nk : Integer;
 begin
-  s := u_CopyUTF8Str( Section );
-  k := u_CopyUTF8Str( Key );
+  s := utf8_Copy( Section );
+  k := utf8_Copy( Key );
 
   ini_GetID( s, k, ns, nk );
 
@@ -468,7 +468,7 @@ begin
 
   if ini_GetID( s, k, i, j ) Then
     begin
-      iniRec.Section[ i ].Key[ j ].Value := u_CopyUTF8Str( Value );
+      iniRec.Section[ i ].Key[ j ].Value := utf8_Copy( Value );
       Result := TRUE;
     end else
       begin
@@ -540,7 +540,7 @@ end;
 
 function _ini_ReadKeyStr( const Section, Key : UTF8String ) : PAnsiChar;
 begin
-  Result := u_GetPAnsiChar( ini_ReadKeyStr( Section, Key ) );
+  Result := utf8_GetPAnsiChar( ini_ReadKeyStr( Section, Key ) );
 end;
 
 end.

@@ -102,12 +102,12 @@ begin
   lineFeed       := FALSE;
   x              := Round( Rect.X ) + 1;
   y              := Round( Rect.Y ) + 1 - Round( Font.MaxHeight * textScale );
-  while i <= length( Text ) do
+  while i <= Length( Text ) do
     begin
       lc   := c;
       j    := i;
-      c    := u_GetUTF8ID( Text, i, @i );
-      imax := Integer( i > length( Text ) );
+      c    := utf8_GetID( Text, i, @i );
+      imax := Integer( i > Length( Text ) );
 
       if ( not startWord ) and ( ( c = 32 ) or ( c <> 10 ) ) Then
         begin
@@ -155,7 +155,7 @@ begin
               DEC( textWordsCount );
             end;
           if textWordsCount > High( textWords ) Then
-            SetLength( textWords, length( textWords ) + 1024 );
+            SetLength( textWords, Length( textWords ) + 1024 );
         end;
 
       if lineFeed or lineEnd Then
@@ -246,7 +246,7 @@ begin
   FillChar( quad[ 0 ], SizeOf( zglTPoint2D ) * 4, 0 );
   charDesc := nil;
   lastPage := -1;
-  c := u_GetUTF8ID( Text, 1, @i );
+  c := utf8_GetID( Text, 1, @i );
   s := 1;
   i := 1;
   if not b2dStarted Then
@@ -267,14 +267,14 @@ begin
             glBegin( GL_QUADS );
           end;
     end;
-  while i <= length( Text ) do
+  while i <= Length( Text ) do
     begin
       if Text[ i ] = #10 Then
         begin
           X := sx;
           Y := Y + Font.MaxHeight * textScale;
         end;
-      c := u_GetUTF8ID( Text, i, @i );
+      c := utf8_GetID( Text, i, @i );
 
       if ( Flags and TEXT_FX_LENGTH > 0 ) and ( s > textLength ) Then
         begin
@@ -409,7 +409,7 @@ begin
         begin
           textFx_SetLength( b - j, textLCoord, textLCharDesc );
           if j > b Then continue;
-          j := j + u_Length( textWords[ i ].Str );
+          j := j + utf8_Length( textWords[ i ].Str );
         end;
       text_Draw( Font, textWords[ i ].X, textWords[ i ].Y, textWords[ i ].Str, NewFlags );
     end;
@@ -442,9 +442,9 @@ begin
   Result  := 0;
   if ( Text = '' ) or ( not Assigned( Font ) ) Then exit;
   i  := 1;
-  while i <= length( Text ) do
+  while i <= Length( Text ) do
     begin
-      c := u_GetUTF8ID( Text, i, @i );
+      c := utf8_GetID( Text, i, @i );
       if c = 10 Then
         begin
           lResult := Result;
