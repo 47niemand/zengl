@@ -481,7 +481,6 @@ function res_ProcQueue( data : Pointer ) : LongInt; {$IFDEF USE_EXPORT_C} regist
 begin
   Result := 0;
   id     := PByte( data )^;
-  item   := nil;
   while appWork do
     begin
       item := resQueueItems[ id ].next;
