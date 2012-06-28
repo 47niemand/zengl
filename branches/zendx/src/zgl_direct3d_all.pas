@@ -1251,6 +1251,9 @@ begin
     GL_TEXTURE_MIN_FILTER: _type := D3DSAMP_MINFILTER;
     GL_TEXTURE_MAG_FILTER: _type := D3DSAMP_MAGFILTER;
     {$ENDIF}
+  else
+    log_Add( 'glTexParameterf: wrong pname' );
+    exit;
   end;
 
   case Round( param ) of
@@ -1265,6 +1268,9 @@ begin
     GL_LINEAR_MIPMAP_NEAREST: value := D3DTEXF_PYRAMIDALQUAD;
     GL_LINEAR_MIPMAP_LINEAR:  value := D3DTEXF_GAUSSIANQUAD;
     {$ENDIF}
+  else
+    log_Add( 'glTexParameterf: wrong param' );
+    exit;
   end;
 
   case pname of
@@ -1313,11 +1319,17 @@ begin
         exit;
       end;
     {$ENDIF}
+  else
+    log_Add( 'glTexParameteri: wrong pname' );
+    exit;
   end;
 
   case param of
     GL_CLAMP_TO_EDGE: value := D3DTADDRESS_CLAMP;
     GL_REPEAT: value := D3DTADDRESS_WRAP;
+  else
+    log_Add( 'glTexParameteri: wrong param' );
+    exit;
   end;
 
   lWrap := param;
@@ -1454,7 +1466,7 @@ begin
           d3dDevice.CopyRects( src, nil, 0, dst, nil );
           {$ENDIF}
           {$IFDEF USE_DIRECT3D9}
-          d3dDevice.CreateOffscreenPlainSurface( d.Width, d.Height, d.Format, D3DPOOL_SYSTEMMEM, dst, 0 );
+          d3dDevice.CreateOffscreenPlainSurface( d.Width, d.Height, d.Format, D3DPOOL_SYSTEMMEM, dst, nil );
           d3dDevice.GetRenderTargetData( src, dst );
           {$ENDIF}
 
@@ -1501,6 +1513,9 @@ begin
     GL_SOURCE0_ALPHA_ARB: _type := D3DTSS_ALPHAARG0;
     GL_SOURCE1_ALPHA_ARB: _type := D3DTSS_ALPHAARG1;
     GL_SOURCE2_ALPHA_ARB: _type := D3DTSS_ALPHAARG2;
+  else
+    log_Add( 'glTexEnvi: wrong pname' );
+    exit;
   end;
 
   case param of
@@ -1508,6 +1523,9 @@ begin
     GL_MODULATE:          value := D3DTOP_MODULATE;
     GL_TEXTURE:           value := D3DTA_TEXTURE;
     GL_PRIMARY_COLOR_ARB: value := D3DTA_DIFFUSE;
+  else
+    log_Add( 'glTexEnvi: wrong param' );
+    exit;
   end;
 
   d3dDevice.SetTextureStageState( 0, _type, value );

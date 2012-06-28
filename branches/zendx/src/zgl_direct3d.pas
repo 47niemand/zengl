@@ -523,10 +523,11 @@ function d3d_CheckFSAA : TD3DMultiSampleType;
     fsaa : Integer;
 begin
   fsaa := oglFSAA;
-  if ( fsaa = 0 ) or ( fsaa = 1 ) Then
-    Result := D3DMULTISAMPLE_NONE;
-  if fsaa > 16 Then
-    fsaa := 16;
+  if fsaa <= 1 Then
+    fsaa := 0
+  else
+    if fsaa > 16 Then
+      fsaa := 16;
   if wndFullScreen Then
     begin
       {$IFDEF USE_DIRECT3D8}

@@ -216,7 +216,6 @@ end;
 
 function app_ProcessMessages( hWnd : HWND; Msg : UINT; wParam : WPARAM; lParam : LPARAM ) : LRESULT; stdcall;
   var
-    i   : Integer;
     len : Integer;
     c   : array[ 0..5 ] of AnsiChar;
     str : UTF8String;

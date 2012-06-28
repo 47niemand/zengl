@@ -135,7 +135,6 @@ function scr_Create : Boolean;
   var
     settings : DEVMODEW;
 begin
-  Result := FALSE;
   scr_Init();
   if scrDesktop.dmBitsPerPel <> 32 Then
     begin
