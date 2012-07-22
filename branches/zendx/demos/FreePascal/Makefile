@@ -25,7 +25,7 @@ win32:
 	make -C $(DEMO07) win32
 	make -C $(DEMO08) win32
 	make -C $(DEMO09) win32
-#	make -C $(DEMO10) win32
+	make -C $(DEMO10) win32
 	make -C $(DEMO11) win32
 	make -C $(DEMO12) win32
 	make -C $(DEMO13) win32
@@ -43,7 +43,7 @@ win64:
 	make -C $(DEMO07) win64
 	make -C $(DEMO08) win64
 	make -C $(DEMO09) win64
-#	make -C $(DEMO10) win64
+	make -C $(DEMO10) win64
 	make -C $(DEMO11) win64
 	make -C $(DEMO12) win64
 	make -C $(DEMO13) win64
@@ -61,7 +61,7 @@ clean:
 	make -C $(DEMO07) clean
 	make -C $(DEMO08) clean
 	make -C $(DEMO09) clean
-#	make -C $(DEMO10) clean
+	make -C $(DEMO10) clean
 	make -C $(DEMO11) clean
 	make -C $(DEMO12) clean
 	make -C $(DEMO13) clean
