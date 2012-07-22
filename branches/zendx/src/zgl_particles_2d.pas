@@ -1061,8 +1061,9 @@ procedure emitter2d_Draw( Emitter : zglPEmitter2D );
 begin
   if not Assigned( Emitter ) Then exit;
 
-  with Emitter.BBox do
-    if not sprite2d_InScreen( MinX, MinY, MaxX - MinX, MaxY - MinY, 0 ) Then exit;
+  if render2dClip Then
+    with Emitter.BBox do
+      if not sprite2d_InScreen( MinX, MinY, MaxX - MinX, MaxY - MinY, 0 ) Then exit;
 
   with Emitter^, Emitter._private do
     begin
